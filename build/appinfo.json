@@ -1,0 +1,31 @@
+{
+    "displayName": "RSVP News Reader",
+    "uuid": "a1b2c3d4-5e6f-7190-ab12-cd34ef567890",
+    "sdkVersion": "3",
+    "enableMultiJS": false,
+    "targetPlatforms": [
+        "aplite",
+        "basalt",
+        "diorite"
+    ],
+    "watchapp": {
+        "watchface": false
+    },
+    "messageKeys": {
+        "KEY_NEWS_TITLE": 172,
+        "KEY_REQUEST_NEWS": 173
+    },
+    "resources": {
+        "media": []
+    },
+    "name": "rsvp-breaking-news",
+    "shortName": "RSVP News Reader",
+    "longName": "RSVP News Reader",
+    "versionLabel": "1.0",
+    "companyName": "CJ",
+    "appKeys": {
+        "KEY_NEWS_TITLE": 172,
+        "KEY_REQUEST_NEWS": 173
+    },
+    "capabilities": []
+}
