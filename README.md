@@ -35,7 +35,3 @@ pebble install --phone YOUR_PHONE_IP
 
 - Version: 1.0
 - UUID: b8f4e3c2-7a19-4d5b-9e81-2f6c8a3d0e47
-
-## Credits
-
-News engine extracted from Din Clean watchface by CJ.
