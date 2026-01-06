@@ -1,0 +1,26 @@
+# Pebble build artifacts
+build/
+
+# Lock files
+.lock-waf*
+
+# Python cache
+*.pyc
+__pycache__/
+
+# Node modules (si vous utilisez npm)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log

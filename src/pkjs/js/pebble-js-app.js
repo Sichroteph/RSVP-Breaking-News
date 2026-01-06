@@ -28,9 +28,9 @@ function sendNewsTitle(title) {
   }
   var dict = {};
   dict[KEY_NEWS_TITLE] = title;
-  Pebble.sendAppMessage(dict, function() {
+  Pebble.sendAppMessage(dict, function () {
     console.log("News title sent successfully");
-  }, function(err) {
+  }, function (err) {
     console.log("Error sending news title: " + err);
   });
 }
@@ -71,18 +71,18 @@ function fetchAndSendNews() {
   var xhr = new XMLHttpRequest();
 
   xhr.timeout = 10000;
-  xhr.ontimeout = function() {
+  xhr.ontimeout = function () {
     newsXhrPending = false;
     console.log("News XHR timeout");
     sendNewsTitle("Timeout");
   };
 
-  xhr.onload = function() {
+  xhr.onload = function () {
     newsXhrPending = false;
     if (xhr.status === 200) {
       var titles = [];
       var text = xhr.responseText;
-      
+
       // Parse titles from XML using regex
       var regex = /<title>\s*<!\[CDATA\[\s*([^\]]+?)\s*\]\]>\s*<\/title>/g;
       var match;
@@ -92,7 +92,7 @@ function fetchAndSendNews() {
           titles.push(title);
         }
       }
-      
+
       // Also try without CDATA
       var regex2 = /<title>([^<]+)<\/title>/g;
       while ((match = regex2.exec(text)) !== null) {
@@ -118,23 +118,23 @@ function fetchAndSendNews() {
       sendNewsTitle("News fetch failed");
     }
   };
-  
-  xhr.onerror = function() {
+
+  xhr.onerror = function () {
     newsXhrPending = false;
     sendNewsTitle("Network error");
   };
-  
+
   xhr.open("GET", RSS_URL, true);
   xhr.send();
 }
 
 // Listen for when the app is opened
-Pebble.addEventListener('ready', function() {
+Pebble.addEventListener('ready', function () {
   console.log("===== RSVP Breaking News JS ready event =====");
-  
+
   // Send ready signal and pre-fetch news on startup
   var xhr = new XMLHttpRequest();
-  xhr.onload = function() {
+  xhr.onload = function () {
     if (xhr.status === 200) {
       var titles = [];
       var text = xhr.responseText;
@@ -165,7 +165,7 @@ Pebble.addEventListener('ready', function() {
       }
     }
   };
-  xhr.onerror = function() {
+  xhr.onerror = function () {
     console.log("Error pre-fetching news");
   };
   xhr.open("GET", RSS_URL, true);
@@ -173,10 +173,10 @@ Pebble.addEventListener('ready', function() {
 });
 
 // Listen for messages from the watch
-Pebble.addEventListener('appmessage', function(e) {
+Pebble.addEventListener('appmessage', function (e) {
   console.log("===== Received message from watch =====");
   console.log("Payload: " + JSON.stringify(e.payload));
-  
+
   // Check if this is a news request (using string key name)
   if (e.payload && (e.payload["KEY_REQUEST_NEWS"] !== undefined || e.payload[KEY_REQUEST_NEWS] !== undefined)) {
     console.log("News request received, fetching news...");
