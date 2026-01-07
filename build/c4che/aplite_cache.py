@@ -46,7 +46,7 @@ PEBBLE_SDK_ROOT = '/home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble'
 PLATFORM = {'NAME': 'aplite', 'MAX_APP_BINARY_SIZE': 65536, 'MAX_APP_MEMORY_SIZE': 24576, 'MAX_WORKER_MEMORY_SIZE': 10240, 'MAX_RESOURCES_SIZE_APPSTORE': 131072, 'MAX_RESOURCES_SIZE_APPSTORE_2_X': 98304, 'MAX_RESOURCES_SIZE': 524288, 'DEFINES': ['PBL_PLATFORM_APLITE', 'PBL_BW', 'PBL_RECT', 'PBL_COMPASS', 'PBL_DISPLAY_WIDTH=144', 'PBL_DISPLAY_HEIGHT=168'], 'BUILD_DIR': 'aplite', 'BUNDLE_BIN_DIR': 'aplite', 'ADDITIONAL_TEXT_LINES_FOR_PEBBLE_H': [], 'MAX_FONT_GLYPH_SIZE': 256, 'TAGS': ['aplite', 'bw', 'rect', 'compass', '144w', '168h']}
 PLATFORM_NAME = 'aplite'
 PREFIX = '/usr/local'
-PROJECT_INFO = {'displayName': 'RSVP News Reader', 'uuid': 'a1b2c3d4-5e6f-7190-ab12-cd34ef567890', 'sdkVersion': '3', 'enableMultiJS': False, 'targetPlatforms': ['aplite', 'basalt', 'diorite'], 'watchapp': {'watchface': False}, 'messageKeys': {'KEY_NEWS_TITLE': 172, 'KEY_REQUEST_NEWS': 173}, 'resources': {'media': []}, 'name': 'rsvp-breaking-news', 'shortName': 'RSVP News Reader', 'longName': 'RSVP News Reader', 'versionLabel': '1.0', 'companyName': 'CJ', 'appKeys': {'KEY_NEWS_TITLE': 172, 'KEY_REQUEST_NEWS': 173}}
+PROJECT_INFO = {'displayName': 'RSVP News Reader', 'uuid': 'a1b2c3d4-5e6f-7190-ab12-cd34ef567890', 'sdkVersion': '3', 'enableMultiJS': False, 'targetPlatforms': ['aplite', 'basalt', 'diorite'], 'watchapp': {'watchface': False}, 'messageKeys': {'KEY_NEWS_TITLE': 172, 'KEY_REQUEST_NEWS': 173}, 'resources': {'media': []}, 'name': 'rsvp-breaking-news', 'shortName': 'RSVP News Reader', 'longName': 'RSVP News Reader', 'versionLabel': '1.1', 'companyName': 'CJ', 'appKeys': {'KEY_NEWS_TITLE': 172, 'KEY_REQUEST_NEWS': 173}}
 REQUESTED_PLATFORMS = ['aplite', 'basalt', 'diorite']
 RESOURCES_JSON = []
 RPATH_ST = '-Wl,-rpath,%s'
@@ -61,7 +61,7 @@ STLIB_MARKER = None
 STLIB_ST = '-l%s'
 SUPPORTED_PLATFORMS = ['flint', 'chalk', 'emery', 'basalt', 'diorite', 'aplite']
 TARGET_PLATFORMS = ['diorite', 'basalt', 'aplite']
-TIMESTAMP = 1767694387
+TIMESTAMP = 1767723680
 USE_GROUPS = True
 VERBOSE = 0
 WEBPACK = ['/home/christophe/.pebble-sdk/SDKs/current/node_modules/.bin/webpack']

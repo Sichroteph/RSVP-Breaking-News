@@ -17,7 +17,7 @@ static char news_title[104] = "";
 // RSVP (Rapid Serial Visual Presentation)
 static char rsvp_word[32] = "";
 static uint8_t rsvp_word_index = 0;
-static uint16_t rsvp_wpm_ms = 200; // 200ms per word (~300 WPM)
+static uint16_t rsvp_wpm_ms = 220; // 200ms per word (~300 WPM)
 static AppTimer *rsvp_timer = NULL;
 
 // Display states
