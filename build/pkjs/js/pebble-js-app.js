@@ -1,190 +1,224 @@
-// RSVP Breaking News - JavaScript component
-// Fetches news from RSS feed and sends titles to Pebble
+// Configuration
+var CONFIG_URL = 'https://sichroteph.github.io/RSVP-Breaking-News/';
 
-console.log("===== RSVP Breaking News JS Loading =====");
-
-// RSS News cache
-var newsCache = [];
-var newsCacheTime = 0;
-var newsIndex = 0;
-var NEWS_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in ms
-var RSS_URL = "https://rss.app/feeds/SdI37Q5uDrVQuAOr.xml";
-
-// Throttle protection
-var lastNewsRequestTime = 0;
-var NEWS_REQUEST_THROTTLE = 1000;
-var newsXhrPending = false;
+// Default RSS feeds
+var RSS_DEFAULT = 'https://www.huffingtonpost.com/feeds/verticals/world/index.xml';
+var RSS_BREAKING = 'https://www.huffingtonpost.com/feeds/verticals/world/index.xml';
+var RSS_GAMING = 'http://feeds.ign.com/ign/games-all';
+var RSS_FINANCE = 'http://feeds.reuters.com/news/wealth';
 
 // Message keys
 var KEY_NEWS_TITLE = 172;
 var KEY_REQUEST_NEWS = 173;
+var KEY_NEWS_FEED_URL = 175;
+var KEY_NEWS_CHANNEL_TITLE = 176;
 
-console.log("Message keys defined: NEWS_TITLE=" + KEY_NEWS_TITLE + ", REQUEST_NEWS=" + KEY_REQUEST_NEWS);
+// State
+var g_items = [];
+var g_current_index = 0;
+var g_channel_title = '';
 
-function sendNewsTitle(title) {
-  // Truncate to 100 chars max for Pebble memory
-  if (title.length > 100) {
-    title = title.substring(0, 97) + "...";
+// Get RSS URL from localStorage or use default
+function getRssUrl() {
+  var customUrl = localStorage.getItem('news_feed_url');
+  if (customUrl && customUrl.trim() !== '') {
+    console.log('Using custom RSS URL: ' + customUrl);
+    return customUrl.trim();
   }
-  var dict = {};
-  dict[KEY_NEWS_TITLE] = title;
-  Pebble.sendAppMessage(dict, function () {
-    console.log("News title sent successfully");
-  }, function (err) {
-    console.log("Error sending news title: " + err);
+  console.log('Using default RSS URL: ' + RSS_DEFAULT);
+  return RSS_DEFAULT;
+}
+
+// Decode HTML entities
+function decodeHtmlEntities(text) {
+  var elem = document.createElement('textarea');
+  elem.innerHTML = text;
+  var decoded = elem.value;
+  
+  decoded = decoded.replace(/&amp;/g, '&');
+  decoded = decoded.replace(/&lt;/g, '<');
+  decoded = decoded.replace(/&gt;/g, '>');
+  decoded = decoded.replace(/&quot;/g, '"');
+  decoded = decoded.replace(/&#39;/g, "'");
+  decoded = decoded.replace(/&apos;/g, "'");
+  decoded = decoded.replace(/&nbsp;/g, ' ');
+  decoded = decoded.replace(/&#8217;/g, "'");
+  decoded = decoded.replace(/&#8220;/g, '"');
+  decoded = decoded.replace(/&#8221;/g, '"');
+  decoded = decoded.replace(/&#8211;/g, '-');
+  decoded = decoded.replace(/&#8212;/g, '-');
+  
+  return decoded;
+}
+
+// Send channel title to Pebble
+function sendNewsChannelTitle() {
+  if (!g_channel_title || g_channel_title.trim() === '') {
+    return;
+  }
+  
+  console.log('Sending channel title: ' + g_channel_title);
+  Pebble.sendAppMessage({
+    'NEWS_CHANNEL_TITLE': g_channel_title
+  }, function() {
+    console.log('Channel title sent successfully');
+  }, function(e) {
+    console.log('Failed to send channel title: ' + JSON.stringify(e));
   });
 }
 
-function fetchAndSendNews() {
-  var now = Date.now();
-
-  // Throttle: ignore requests that come too fast
-  if ((now - lastNewsRequestTime) < NEWS_REQUEST_THROTTLE) {
-    console.log("News request throttled");
-    return;
-  }
-  lastNewsRequestTime = now;
-
-  // Check if cache is still valid
-  if (newsCache.length > 0 && (now - newsCacheTime) < NEWS_CACHE_DURATION) {
-    // Use cached data, increment index
-    newsIndex = (newsIndex + 1) % newsCache.length;
-    console.log("Sending cached title #" + newsIndex + ": " + newsCache[newsIndex]);
-    sendNewsTitle(newsCache[newsIndex]);
-    return;
-  }
-
-  // Prevent concurrent XHR requests
-  if (newsXhrPending) {
-    console.log("News XHR already pending");
-    if (newsCache.length > 0) {
-      newsIndex = (newsIndex + 1) % newsCache.length;
-      sendNewsTitle(newsCache[newsIndex]);
-    } else {
-      sendNewsTitle("Loading...");
-    }
-    return;
-  }
-
-  // Cache expired or empty, fetch new data
-  newsXhrPending = true;
+// Fetch and parse RSS feed
+function fetchRssFeed() {
+  var rssUrl = getRssUrl();
+  console.log('Fetching RSS feed from: ' + rssUrl);
+  
   var xhr = new XMLHttpRequest();
-
-  xhr.timeout = 10000;
-  xhr.ontimeout = function () {
-    newsXhrPending = false;
-    console.log("News XHR timeout");
-    sendNewsTitle("Timeout");
-  };
-
-  xhr.onload = function () {
-    newsXhrPending = false;
-    if (xhr.status === 200) {
-      var titles = [];
-      var text = xhr.responseText;
-
-      // Parse titles from XML using regex
-      var regex = /<title>\s*<!\[CDATA\[\s*([^\]]+?)\s*\]\]>\s*<\/title>/g;
-      var match;
-      while ((match = regex.exec(text)) !== null) {
-        var title = match[1].trim();
-        if (title && title.length > 0) {
-          titles.push(title);
-        }
-      }
-
-      // Also try without CDATA
-      var regex2 = /<title>([^<]+)<\/title>/g;
-      while ((match = regex2.exec(text)) !== null) {
-        var title = match[1].trim();
-        if (title && title.length > 0 && titles.indexOf(title) === -1) {
-          titles.push(title);
-        }
-      }
-
-      if (titles.length > 0) {
-        // Remove first title if it's the RSS feed title
-        if (titles[0].indexOf("Reuters") !== -1 && titles[0].indexOf("Breaking") !== -1) {
-          titles.shift();
-        }
-        newsCache = titles;
-        newsCacheTime = now;
-        newsIndex = 0;
-        sendNewsTitle(newsCache[newsIndex]);
+  xhr.open('GET', rssUrl, true);
+  xhr.setRequestHeader('Content-Type', 'text/xml; charset=UTF-8');
+  
+  xhr.onload = function() {
+    if (xhr.readyState === 4) {
+      if (xhr.status === 200) {
+        console.log('RSS feed fetched successfully');
+        parseRssFeed(xhr.responseText);
       } else {
-        sendNewsTitle("No news available");
+        console.log('Request failed with status: ' + xhr.status);
       }
-    } else {
-      sendNewsTitle("News fetch failed");
     }
   };
-
-  xhr.onerror = function () {
-    newsXhrPending = false;
-    sendNewsTitle("Network error");
+  
+  xhr.onerror = function() {
+    console.log('Network error while fetching RSS feed');
   };
-
-  xhr.open("GET", RSS_URL, true);
+  
   xhr.send();
 }
 
-// Listen for when the app is opened
-Pebble.addEventListener('ready', function () {
-  console.log("===== RSVP Breaking News JS ready event =====");
-
-  // Send ready signal and pre-fetch news on startup
-  var xhr = new XMLHttpRequest();
-  xhr.onload = function () {
-    if (xhr.status === 200) {
-      var titles = [];
-      var text = xhr.responseText;
-      var regex = /<title>\s*<!\[CDATA\[\s*([^\]]+?)\s*\]\]>\s*<\/title>/g;
-      var match;
-      while ((match = regex.exec(text)) !== null) {
-        var title = match[1].trim();
-        if (title && title.length > 0) {
-          titles.push(title);
-        }
-      }
-      var regex2 = /<title>([^<]+)<\/title>/g;
-      while ((match = regex2.exec(text)) !== null) {
-        var title = match[1].trim();
-        if (title && title.length > 0 && titles.indexOf(title) === -1) {
-          titles.push(title);
-        }
-      }
-      if (titles.length > 0) {
-        if (titles[0].indexOf("Reuters") !== -1) {
-          titles.shift();
-        }
-        newsCache = titles;
-        newsCacheTime = Date.now();
-        newsIndex = 0;
-        console.log("News cache prefetched: " + titles.length + " titles");
-        // Don't send automatically - wait for watch to request
+// Parse RSS XML
+function parseRssFeed(xmlText) {
+  var parser = new DOMParser();
+  var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+  
+  var items = xmlDoc.getElementsByTagName('item');
+  console.log('Found ' + items.length + ' items in RSS feed');
+  
+  // Get channel title
+  var channelElements = xmlDoc.getElementsByTagName('channel');
+  if (channelElements.length > 0) {
+    var titleElements = channelElements[0].getElementsByTagName('title');
+    if (titleElements.length > 0) {
+      g_channel_title = titleElements[0].textContent || '';
+      g_channel_title = decodeHtmlEntities(g_channel_title);
+      console.log('Channel title: ' + g_channel_title);
+      sendNewsChannelTitle();
+    }
+  }
+  
+  // Parse items
+  g_items = [];
+  for (var i = 0; i < items.length && i < 50; i++) {
+    var titleNode = items[i].getElementsByTagName('title')[0];
+    if (titleNode) {
+      var title = titleNode.textContent || '';
+      title = decodeHtmlEntities(title);
+      title = title.replace(/<[^>]*>/g, '');
+      title = title.trim();
+      
+      if (title.length > 0) {
+        g_items.push(title);
       }
     }
-  };
-  xhr.onerror = function () {
-    console.log("Error pre-fetching news");
-  };
-  xhr.open("GET", RSS_URL, true);
-  xhr.send();
+  }
+  
+  console.log('Parsed ' + g_items.length + ' news items');
+  g_current_index = 0;
+  
+  if (g_items.length > 0) {
+    sendNextNewsItem();
+  } else {
+    console.log('No valid items found in RSS feed');
+  }
+}
+
+// Send next news item to Pebble
+function sendNextNewsItem() {
+  if (g_current_index >= g_items.length) {
+    console.log('All items sent');
+    g_current_index = 0;
+    return;
+  }
+  
+  var title = g_items[g_current_index];
+  console.log('Sending item ' + (g_current_index + 1) + ': ' + title);
+  
+  Pebble.sendAppMessage({
+    'NEWS_TITLE': title
+  }, function() {
+    console.log('Message sent successfully');
+    g_current_index++;
+  }, function(e) {
+    console.log('Failed to send message: ' + JSON.stringify(e));
+  });
+}
+
+// Pebble event handlers
+Pebble.addEventListener('ready', function(e) {
+  console.log('PebbleKit JS ready');
+  fetchRssFeed();
 });
 
-// Listen for messages from the watch
-Pebble.addEventListener('appmessage', function (e) {
-  console.log("===== Received message from watch =====");
-  console.log("Payload: " + JSON.stringify(e.payload));
-
-  // Check if this is a news request (using string key name)
-  if (e.payload && (e.payload["KEY_REQUEST_NEWS"] !== undefined || e.payload[KEY_REQUEST_NEWS] !== undefined)) {
-    console.log("News request received, fetching news...");
-    fetchAndSendNews();
-    return;
-  } else {
-    console.log("No news request found in payload");
+Pebble.addEventListener('appmessage', function(e) {
+  console.log('Received message from Pebble');
+  
+  if (e.payload.REQUEST_NEWS) {
+    console.log('News request received');
+    if (g_items.length === 0) {
+      fetchRssFeed();
+    } else {
+      sendNextNewsItem();
+    }
+  }
+  
+  if (e.payload.NEWS_FEED_URL) {
+    var customUrl = e.payload.NEWS_FEED_URL;
+    console.log('Received custom feed URL: ' + customUrl);
+    localStorage.setItem('news_feed_url', customUrl);
+    fetchRssFeed();
   }
 });
 
-console.log("===== Event listeners registered =====");
+Pebble.addEventListener('showConfiguration', function(e) {
+  console.log('Opening configuration page');
+  Pebble.openURL(CONFIG_URL);
+});
+
+Pebble.addEventListener('webviewclosed', function(e) {
+  console.log('Configuration closed');
+  
+  if (!e.response || e.response === 'CANCELLED') {
+    console.log('Configuration cancelled');
+    return;
+  }
+  
+  try {
+    var configData = JSON.parse(decodeURIComponent(e.response));
+    console.log('Configuration data: ' + JSON.stringify(configData));
+    
+    if (configData.news_feed_url) {
+      var customUrl = configData.news_feed_url.trim();
+      if (customUrl !== '') {
+        console.log('Saving custom feed URL: ' + customUrl);
+        localStorage.setItem('news_feed_url', customUrl);
+        fetchRssFeed();
+      } else {
+        console.log('Clearing custom feed URL');
+        localStorage.removeItem('news_feed_url');
+        fetchRssFeed();
+      }
+    }
+  } catch (err) {
+    console.log('Error parsing configuration: ' + err.message);
+  }
+});
+
+console.log('Pebble JS app loaded');
