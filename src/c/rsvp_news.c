@@ -48,58 +48,70 @@ static uint8_t news_max_retries = 3;
 
 // Calculate pivot index (Spritz ORP algorithm)
 static int get_pivot_index(int word_length) {
-  if (word_length <= 0) return 0;
+  if (word_length <= 0)
+    return 0;
   switch (word_length) {
-    case 1: return 0;
-    case 2:
-    case 3:
-    case 4:
-    case 5: return 1;
-    case 6:
-    case 7:
-    case 8:
-    case 9: return 2;
-    case 10:
-    case 11:
-    case 12:
-    case 13: return 3;
-    default: return 4;
+  case 1:
+    return 0;
+  case 2:
+  case 3:
+  case 4:
+  case 5:
+    return 1;
+  case 6:
+  case 7:
+  case 8:
+  case 9:
+    return 2;
+  case 10:
+  case 11:
+  case 12:
+  case 13:
+    return 3;
+  default:
+    return 4;
   }
 }
 
-static int get_text_width(GContext *ctx, const char *text, int length, GFont font) {
-  if (length <= 0 || !text) return 0;
+static int get_text_width(GContext *ctx, const char *text, int length,
+                          GFont font) {
+  if (length <= 0 || !text)
+    return 0;
   char temp[32];
   int copy_len = (length < 31) ? length : 31;
   memcpy(temp, text, copy_len);
   temp[copy_len] = '\0';
-  GSize size = graphics_text_layout_get_content_size(temp, font, GRect(0, 0, 500, 50),
-                                                      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft);
+  GSize size = graphics_text_layout_get_content_size(
+      temp, font, GRect(0, 0, 500, 50), GTextOverflowModeTrailingEllipsis,
+      GTextAlignmentLeft);
   return size.w;
 }
 
 static int get_char_width(GContext *ctx, char c, GFont font) {
   char temp[2] = {c, '\0'};
-  GSize size = graphics_text_layout_get_content_size(temp, font, GRect(0, 0, 100, 50),
-                                                      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft);
+  GSize size = graphics_text_layout_get_content_size(
+      temp, font, GRect(0, 0, 100, 50), GTextOverflowModeTrailingEllipsis,
+      GTextAlignmentLeft);
   return size.w;
 }
 
 // Calculate Spritz delay based on punctuation
 static uint16_t calculate_spritz_delay(const char *word) {
-  if (!word || word[0] == '\0') return rsvp_wpm_ms;
+  if (!word || word[0] == '\0')
+    return rsvp_wpm_ms;
   uint16_t delay = rsvp_wpm_ms;
   int len = strlen(word);
   char last_char = word[len - 1];
-  
+
   if (last_char == '.' || last_char == '!' || last_char == '?') {
     delay = rsvp_wpm_ms * 3;
-  } else if (last_char == ',' || last_char == ':' || last_char == ';' || last_char == ')') {
+  } else if (last_char == ',' || last_char == ':' || last_char == ';' ||
+             last_char == ')') {
     delay = rsvp_wpm_ms * 2;
   } else if (last_char == '(' || last_char == '-') {
     delay = (rsvp_wpm_ms * 3) / 2;
   }
-  
+
   if (len > 8) {
     delay += (len - 8) * 20;
   }
@@ -116,7 +128,7 @@ static void draw_splash_screen(GContext *ctx) {
   const char *title = (channel_title[0] != '\0') ? channel_title : "News Feed";
   GFont title_font;
   int title_y = 55;
-  
+
   if (strlen(title) > 20) {
     title_font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
     title_y = 50;
@@ -132,11 +144,13 @@ static void draw_splash_screen(GContext *ctx) {
 
   int line_y = 105;
   graphics_draw_line(ctx, GPoint(20, line_y), GPoint(WIDTH - 20, line_y));
-  graphics_draw_line(ctx, GPoint(20, line_y + 1), GPoint(WIDTH - 20, line_y + 1));
+  graphics_draw_line(ctx, GPoint(20, line_y + 1),
+                     GPoint(WIDTH - 20, line_y + 1));
 
   GFont font_sub = fonts_get_system_font(FONT_KEY_GOTHIC_18);
   graphics_draw_text(ctx, "Loading...", font_sub, GRect(0, 115, WIDTH, 22),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter,
+                     NULL);
 
   for (int i = 0; i < 3; i++) {
     graphics_fill_circle(ctx, GPoint(WIDTH / 2 - 10 + i * 10, 148), 2);
@@ -150,16 +164,21 @@ static void draw_rsvp_word(GContext *ctx) {
   graphics_context_set_stroke_color(ctx, GColorWhite);
 
   int line_half_width = 60;
-  graphics_draw_line(ctx, GPoint(SPRITZ_PIVOT_X - line_half_width, SPRITZ_LINE_TOP_Y),
-                     GPoint(SPRITZ_PIVOT_X + line_half_width, SPRITZ_LINE_TOP_Y));
-  graphics_draw_line(ctx, GPoint(SPRITZ_PIVOT_X - line_half_width, SPRITZ_LINE_BOTTOM_Y),
-                     GPoint(SPRITZ_PIVOT_X + line_half_width, SPRITZ_LINE_BOTTOM_Y));
-  graphics_draw_circle(ctx, GPoint(SPRITZ_PIVOT_X, SPRITZ_LINE_TOP_Y), SPRITZ_CIRCLE_RADIUS);
+  graphics_draw_line(
+      ctx, GPoint(SPRITZ_PIVOT_X - line_half_width, SPRITZ_LINE_TOP_Y),
+      GPoint(SPRITZ_PIVOT_X + line_half_width, SPRITZ_LINE_TOP_Y));
+  graphics_draw_line(
+      ctx, GPoint(SPRITZ_PIVOT_X - line_half_width, SPRITZ_LINE_BOTTOM_Y),
+      GPoint(SPRITZ_PIVOT_X + line_half_width, SPRITZ_LINE_BOTTOM_Y));
+  graphics_draw_circle(ctx, GPoint(SPRITZ_PIVOT_X, SPRITZ_LINE_TOP_Y),
+                       SPRITZ_CIRCLE_RADIUS);
 
-  if (rsvp_word[0] == '\0') return;
+  if (rsvp_word[0] == '\0')
+    return;
 
   int word_length = strlen(rsvp_word);
-  if (word_length == 0) return;
+  if (word_length == 0)
+    return;
 
   int pivot_idx = get_pivot_index(word_length);
   GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_28);
@@ -194,24 +213,30 @@ static void draw_rsvp_word(GContext *ctx) {
 
   if (pre_pivot[0] != '\0') {
     graphics_draw_text(ctx, pre_pivot, font, GRect(current_x, text_y, 200, 40),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
+                       NULL);
     current_x += pre_pivot_width;
   }
 
   // Bold pivot letter (multi-pass rendering)
   graphics_draw_text(ctx, pivot_char, font, GRect(current_x, text_y, 50, 40),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-  graphics_draw_text(ctx, pivot_char, font, GRect(current_x + 1, text_y, 50, 40),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-  graphics_draw_text(ctx, pivot_char, font, GRect(current_x, text_y + 1, 50, 40),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-  graphics_draw_text(ctx, pivot_char, font, GRect(current_x + 1, text_y + 1, 50, 40),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
+                     NULL);
+  graphics_draw_text(
+      ctx, pivot_char, font, GRect(current_x + 1, text_y, 50, 40),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  graphics_draw_text(
+      ctx, pivot_char, font, GRect(current_x, text_y + 1, 50, 40),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  graphics_draw_text(
+      ctx, pivot_char, font, GRect(current_x + 1, text_y + 1, 50, 40),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
   current_x += pivot_char_width;
 
   if (post_pivot[0] != '\0') {
     graphics_draw_text(ctx, post_pivot, font, GRect(current_x, text_y, 200, 40),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
+                       NULL);
   }
 }
 
@@ -222,7 +247,8 @@ static void draw_end_screen(GContext *ctx) {
   graphics_context_set_text_color(ctx, GColorWhite);
   GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
   graphics_draw_text(ctx, "END", font, GRect(0, HEIGHT / 2 - 10, WIDTH, 40),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter,
+                     NULL);
 }
 
 static void update_proc(Layer *layer, GContext *ctx) {
@@ -336,7 +362,8 @@ static void rsvp_timer_callback(void *context) {
     if (news_display_count >= news_max_count) {
       news_timer = app_timer_register(500, news_timer_callback, NULL);
     } else {
-      news_timer = app_timer_register(news_interval_ms, news_timer_callback, NULL);
+      news_timer =
+          app_timer_register(news_interval_ms, news_timer_callback, NULL);
     }
   }
 }
@@ -374,21 +401,31 @@ static void news_timer_callback(void *context) {
   news_timer = app_timer_register(8000, news_timer_callback, NULL);
 }
 
-static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+static void inbox_received_callback(DictionaryIterator *iterator,
+                                    void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Received message from JS");
 
   Tuple *channel_title_tuple = dict_find(iterator, KEY_NEWS_CHANNEL_TITLE);
   if (channel_title_tuple) {
-    snprintf(channel_title, sizeof(channel_title), "%s", channel_title_tuple->value->cstring);
+    snprintf(channel_title, sizeof(channel_title), "%s",
+             channel_title_tuple->value->cstring);
     APP_LOG(APP_LOG_LEVEL_INFO, "Received channel title: %s", channel_title);
     if (s_splash_active) {
       layer_mark_dirty(s_canvas_layer);
     }
   }
 
+  // Vibration de confirmation quand un custom feed est configuré
+  Tuple *feed_url_tuple = dict_find(iterator, KEY_NEWS_FEED_URL);
+  if (feed_url_tuple) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Custom feed configured - vibrating");
+    vibes_short_pulse();
+  }
+
   Tuple *news_title_tuple = dict_find(iterator, KEY_NEWS_TITLE);
   if (news_title_tuple) {
-    snprintf(news_title, sizeof(news_title), "%s", news_title_tuple->value->cstring);
+    snprintf(news_title, sizeof(news_title), "%s",
+             news_title_tuple->value->cstring);
     APP_LOG(APP_LOG_LEVEL_INFO, "Received title: %s", news_title);
     news_retry_count = 0;
 
@@ -407,12 +444,12 @@ static void inbox_dropped_callback(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped! Reason: %d", (int)reason);
 }
 
-static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
+static void outbox_failed_callback(DictionaryIterator *iterator,
+                                   AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed! Reason: %d", (int)reason);
 }
 
-static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
-}
+static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {}
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (s_paused && s_end_screen) {
@@ -461,7 +498,8 @@ static void main_window_unload(Window *window) {
 static void init(void) {
   s_main_window = window_create();
 
-  window_set_window_handlers(s_main_window,
+  window_set_window_handlers(
+      s_main_window,
       (WindowHandlers){.load = main_window_load, .unload = main_window_unload});
 
   window_stack_push(s_main_window, true);
@@ -474,7 +512,8 @@ static void init(void) {
   const uint32_t inbox_size = 512;
   const uint32_t outbox_size = 128;
   app_message_open(inbox_size, outbox_size);
-  APP_LOG(APP_LOG_LEVEL_INFO, "AppMessage opened with inbox=%lu, outbox=%lu", inbox_size, outbox_size);
+  APP_LOG(APP_LOG_LEVEL_INFO, "AppMessage opened with inbox=%lu, outbox=%lu",
+          inbox_size, outbox_size);
 
   news_timer = app_timer_register(1500, news_timer_callback, NULL);
 }

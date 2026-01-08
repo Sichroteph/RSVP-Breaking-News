@@ -2,10 +2,10 @@
 var CONFIG_URL = 'https://sichroteph.github.io/RSVP-Breaking-News/';
 
 // Default RSS feeds
-var RSS_DEFAULT = 'https://www.huffingtonpost.com/feeds/verticals/world/index.xml';
-var RSS_BREAKING = 'https://www.huffingtonpost.com/feeds/verticals/world/index.xml';
+var RSS_DEFAULT = 'https://feeds.bbci.co.uk/news/world/rss.xml';
+var RSS_BREAKING = 'https://feeds.bbci.co.uk/news/world/rss.xml';
 var RSS_GAMING = 'http://feeds.ign.com/ign/games-all';
-var RSS_FINANCE = 'http://feeds.reuters.com/news/wealth';
+var RSS_FINANCE = 'https://feeds.bbci.co.uk/news/business/rss.xml';
 
 // Message keys
 var KEY_NEWS_TITLE = 172;
@@ -31,10 +31,9 @@ function getRssUrl() {
 
 // Decode HTML entities
 function decodeHtmlEntities(text) {
-  var elem = document.createElement('textarea');
-  elem.innerHTML = text;
-  var decoded = elem.value;
+  if (!text) return '';
   
+  var decoded = text;
   decoded = decoded.replace(/&amp;/g, '&');
   decoded = decoded.replace(/&lt;/g, '<');
   decoded = decoded.replace(/&gt;/g, '>');
@@ -47,6 +46,13 @@ function decodeHtmlEntities(text) {
   decoded = decoded.replace(/&#8221;/g, '"');
   decoded = decoded.replace(/&#8211;/g, '-');
   decoded = decoded.replace(/&#8212;/g, '-');
+  decoded = decoded.replace(/&#160;/g, ' ');
+  decoded = decoded.replace(/&rsquo;/g, "'");
+  decoded = decoded.replace(/&lsquo;/g, "'");
+  decoded = decoded.replace(/&rdquo;/g, '"');
+  decoded = decoded.replace(/&ldquo;/g, '"');
+  decoded = decoded.replace(/&mdash;/g, '-');
+  decoded = decoded.replace(/&ndash;/g, '-');
   
   return decoded;
 }
@@ -58,9 +64,9 @@ function sendNewsChannelTitle() {
   }
   
   console.log('Sending channel title: ' + g_channel_title);
-  Pebble.sendAppMessage({
-    'NEWS_CHANNEL_TITLE': g_channel_title
-  }, function() {
+  var dict = {};
+  dict[KEY_NEWS_CHANNEL_TITLE] = g_channel_title;
+  Pebble.sendAppMessage(dict, function() {
     console.log('Channel title sent successfully');
   }, function(e) {
     console.log('Failed to send channel title: ' + JSON.stringify(e));
@@ -151,9 +157,9 @@ function sendNextNewsItem() {
   var title = g_items[g_current_index];
   console.log('Sending item ' + (g_current_index + 1) + ': ' + title);
   
-  Pebble.sendAppMessage({
-    'NEWS_TITLE': title
-  }, function() {
+  var dict = {};
+  dict[KEY_NEWS_TITLE] = title;
+  Pebble.sendAppMessage(dict, function() {
     console.log('Message sent successfully');
     g_current_index++;
   }, function(e) {
@@ -168,9 +174,10 @@ Pebble.addEventListener('ready', function(e) {
 });
 
 Pebble.addEventListener('appmessage', function(e) {
-  console.log('Received message from Pebble');
+  console.log('Received message from Pebble: ' + JSON.stringify(e.payload));
   
-  if (e.payload.REQUEST_NEWS) {
+  // Vérifier à la fois la clé numérique et le nom de clé
+  if (e.payload[KEY_REQUEST_NEWS] || e.payload['KEY_REQUEST_NEWS'] || e.payload['173']) {
     console.log('News request received');
     if (g_items.length === 0) {
       fetchRssFeed();
@@ -179,8 +186,8 @@ Pebble.addEventListener('appmessage', function(e) {
     }
   }
   
-  if (e.payload.NEWS_FEED_URL) {
-    var customUrl = e.payload.NEWS_FEED_URL;
+  if (e.payload[KEY_NEWS_FEED_URL] || e.payload['KEY_NEWS_FEED_URL'] || e.payload['175']) {
+    var customUrl = e.payload[KEY_NEWS_FEED_URL] || e.payload['KEY_NEWS_FEED_URL'] || e.payload['175'];
     console.log('Received custom feed URL: ' + customUrl);
     localStorage.setItem('news_feed_url', customUrl);
     fetchRssFeed();
@@ -204,15 +211,33 @@ Pebble.addEventListener('webviewclosed', function(e) {
     var configData = JSON.parse(decodeURIComponent(e.response));
     console.log('Configuration data: ' + JSON.stringify(configData));
     
-    if (configData.news_feed_url) {
-      var customUrl = configData.news_feed_url.trim();
+    // La page de config envoie input_news_feed_url
+    var feedUrl = configData.input_news_feed_url || configData.news_feed_url;
+    if (feedUrl !== undefined) {
+      var customUrl = feedUrl.trim();
       if (customUrl !== '') {
         console.log('Saving custom feed URL: ' + customUrl);
         localStorage.setItem('news_feed_url', customUrl);
+        
+        // Reset items pour forcer le rechargement
+        g_items = [];
+        g_current_index = 0;
+        
+        // Vibration de confirmation
+        var dict = {};
+        dict[KEY_NEWS_FEED_URL] = 1; // Signal de confirmation
+        Pebble.sendAppMessage(dict, function() {
+          console.log('Confirmation vibration sent');
+        }, function(err) {
+          console.log('Failed to send confirmation: ' + JSON.stringify(err));
+        });
+        
         fetchRssFeed();
       } else {
         console.log('Clearing custom feed URL');
         localStorage.removeItem('news_feed_url');
+        g_items = [];
+        g_current_index = 0;
         fetchRssFeed();
       }
     }
