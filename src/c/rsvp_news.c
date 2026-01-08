@@ -341,12 +341,8 @@ static void rsvp_timer_callback(void *context) {
     layer_mark_dirty(s_canvas_layer);
     news_display_count++;
 
-    if (news_display_count >= news_max_count) {
-      news_timer = app_timer_register(500, news_timer_callback, NULL);
-    } else {
-      news_timer =
-          app_timer_register(news_interval_ms, news_timer_callback, NULL);
-    }
+    // Cycle infini - demande toujours la prochaine news
+    news_timer = app_timer_register(news_interval_ms, news_timer_callback, NULL);
   }
 }
 
@@ -361,21 +357,9 @@ static void news_timer_callback(void *context) {
     layer_mark_dirty(s_canvas_layer);
   }
 
-  if (news_display_count >= news_max_count) {
-    s_end_screen = true;
-    s_paused = true;
-    layer_mark_dirty(s_canvas_layer);
-    end_timer = app_timer_register(1000, end_timer_callback, NULL);
-    return;
-  }
-
+  // En cas d'échec répété, on continue quand même
   if (news_retry_count >= news_max_retries) {
-    s_end_screen = true;
-    s_paused = true;
-    layer_mark_dirty(s_canvas_layer);
     news_retry_count = 0;
-    end_timer = app_timer_register(1000, end_timer_callback, NULL);
-    return;
   }
 
   news_retry_count++;
@@ -414,6 +398,11 @@ static void inbox_received_callback(DictionaryIterator *iterator,
     if (news_timer) {
       app_timer_cancel(news_timer);
       news_timer = NULL;
+    }
+
+    // Désactiver le splash screen si encore actif
+    if (s_splash_active) {
+      s_splash_active = false;
     }
 
     start_rsvp_for_title();

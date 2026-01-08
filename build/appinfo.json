@@ -11,14 +11,9 @@
     "watchapp": {
         "watchface": false
     },
-    "capabilities": [
-        "configurable"
-    ],
     "messageKeys": {
         "KEY_NEWS_TITLE": 172,
-        "KEY_REQUEST_NEWS": 173,
-        "KEY_NEWS_FEED_URL": 175,
-        "KEY_NEWS_CHANNEL_TITLE": 176
+        "KEY_REQUEST_NEWS": 173
     },
     "resources": {
         "media": []
@@ -26,12 +21,11 @@
     "name": "rsvp-breaking-news",
     "shortName": "RSVP News Reader",
     "longName": "RSVP News Reader",
-    "versionLabel": "1.2",
+    "versionLabel": "1.4",
     "companyName": "CJ",
     "appKeys": {
         "KEY_NEWS_TITLE": 172,
-        "KEY_REQUEST_NEWS": 173,
-        "KEY_NEWS_FEED_URL": 175,
-        "KEY_NEWS_CHANNEL_TITLE": 176
-    }
+        "KEY_REQUEST_NEWS": 173
+    },
+    "capabilities": []
 }

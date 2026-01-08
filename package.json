@@ -1,7 +1,7 @@
 {
   "name": "rsvp-breaking-news",
   "author": "CJ",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "keywords": [
     "pebble-app"
   ],
@@ -20,14 +20,9 @@
     "watchapp": {
       "watchface": false
     },
-    "capabilities": [
-      "configurable"
-    ],
     "messageKeys": {
       "KEY_NEWS_TITLE": 172,
-      "KEY_REQUEST_NEWS": 173,
-      "KEY_NEWS_FEED_URL": 175,
-      "KEY_NEWS_CHANNEL_TITLE": 176
+      "KEY_REQUEST_NEWS": 173
     },
     "resources": {
       "media": []
