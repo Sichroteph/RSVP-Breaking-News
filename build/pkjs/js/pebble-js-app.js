@@ -32,7 +32,7 @@ function getRssUrl() {
 // Decode HTML entities
 function decodeHtmlEntities(text) {
   if (!text) return '';
-  
+
   var decoded = text;
   decoded = decoded.replace(/&amp;/g, '&');
   decoded = decoded.replace(/&lt;/g, '<');
@@ -53,7 +53,7 @@ function decodeHtmlEntities(text) {
   decoded = decoded.replace(/&ldquo;/g, '"');
   decoded = decoded.replace(/&mdash;/g, '-');
   decoded = decoded.replace(/&ndash;/g, '-');
-  
+
   return decoded;
 }
 
@@ -62,13 +62,13 @@ function sendNewsChannelTitle() {
   if (!g_channel_title || g_channel_title.trim() === '') {
     return;
   }
-  
+
   console.log('Sending channel title: ' + g_channel_title);
   var dict = {};
   dict[KEY_NEWS_CHANNEL_TITLE] = g_channel_title;
-  Pebble.sendAppMessage(dict, function() {
+  Pebble.sendAppMessage(dict, function () {
     console.log('Channel title sent successfully');
-  }, function(e) {
+  }, function (e) {
     console.log('Failed to send channel title: ' + JSON.stringify(e));
   });
 }
@@ -77,12 +77,12 @@ function sendNewsChannelTitle() {
 function fetchRssFeed() {
   var rssUrl = getRssUrl();
   console.log('Fetching RSS feed from: ' + rssUrl);
-  
+
   var xhr = new XMLHttpRequest();
   xhr.open('GET', rssUrl, true);
   xhr.setRequestHeader('Content-Type', 'text/xml; charset=UTF-8');
-  
-  xhr.onload = function() {
+
+  xhr.onload = function () {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
         console.log('RSS feed fetched successfully');
@@ -92,11 +92,11 @@ function fetchRssFeed() {
       }
     }
   };
-  
-  xhr.onerror = function() {
+
+  xhr.onerror = function () {
     console.log('Network error while fetching RSS feed');
   };
-  
+
   xhr.send();
 }
 
@@ -104,10 +104,10 @@ function fetchRssFeed() {
 function parseRssFeed(xmlText) {
   var parser = new DOMParser();
   var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-  
+
   var items = xmlDoc.getElementsByTagName('item');
   console.log('Found ' + items.length + ' items in RSS feed');
-  
+
   // Get channel title
   var channelElements = xmlDoc.getElementsByTagName('channel');
   if (channelElements.length > 0) {
@@ -119,7 +119,7 @@ function parseRssFeed(xmlText) {
       sendNewsChannelTitle();
     }
   }
-  
+
   // Parse items
   g_items = [];
   for (var i = 0; i < items.length && i < 50; i++) {
@@ -129,16 +129,16 @@ function parseRssFeed(xmlText) {
       title = decodeHtmlEntities(title);
       title = title.replace(/<[^>]*>/g, '');
       title = title.trim();
-      
+
       if (title.length > 0) {
         g_items.push(title);
       }
     }
   }
-  
+
   console.log('Parsed ' + g_items.length + ' news items');
   g_current_index = 0;
-  
+
   if (g_items.length > 0) {
     sendNextNewsItem();
   } else {
@@ -153,29 +153,29 @@ function sendNextNewsItem() {
     g_current_index = 0;
     return;
   }
-  
+
   var title = g_items[g_current_index];
   console.log('Sending item ' + (g_current_index + 1) + ': ' + title);
-  
+
   var dict = {};
   dict[KEY_NEWS_TITLE] = title;
-  Pebble.sendAppMessage(dict, function() {
+  Pebble.sendAppMessage(dict, function () {
     console.log('Message sent successfully');
     g_current_index++;
-  }, function(e) {
+  }, function (e) {
     console.log('Failed to send message: ' + JSON.stringify(e));
   });
 }
 
 // Pebble event handlers
-Pebble.addEventListener('ready', function(e) {
+Pebble.addEventListener('ready', function (e) {
   console.log('PebbleKit JS ready');
   fetchRssFeed();
 });
 
-Pebble.addEventListener('appmessage', function(e) {
+Pebble.addEventListener('appmessage', function (e) {
   console.log('Received message from Pebble: ' + JSON.stringify(e.payload));
-  
+
   // Vérifier à la fois la clé numérique et le nom de clé
   if (e.payload[KEY_REQUEST_NEWS] || e.payload['KEY_REQUEST_NEWS'] || e.payload['173']) {
     console.log('News request received');
@@ -185,7 +185,7 @@ Pebble.addEventListener('appmessage', function(e) {
       sendNextNewsItem();
     }
   }
-  
+
   if (e.payload[KEY_NEWS_FEED_URL] || e.payload['KEY_NEWS_FEED_URL'] || e.payload['175']) {
     var customUrl = e.payload[KEY_NEWS_FEED_URL] || e.payload['KEY_NEWS_FEED_URL'] || e.payload['175'];
     console.log('Received custom feed URL: ' + customUrl);
@@ -194,23 +194,23 @@ Pebble.addEventListener('appmessage', function(e) {
   }
 });
 
-Pebble.addEventListener('showConfiguration', function(e) {
+Pebble.addEventListener('showConfiguration', function (e) {
   console.log('Opening configuration page');
   Pebble.openURL(CONFIG_URL);
 });
 
-Pebble.addEventListener('webviewclosed', function(e) {
+Pebble.addEventListener('webviewclosed', function (e) {
   console.log('Configuration closed');
-  
+
   if (!e.response || e.response === 'CANCELLED') {
     console.log('Configuration cancelled');
     return;
   }
-  
+
   try {
     var configData = JSON.parse(decodeURIComponent(e.response));
     console.log('Configuration data: ' + JSON.stringify(configData));
-    
+
     // La page de config envoie input_news_feed_url
     var feedUrl = configData.input_news_feed_url || configData.news_feed_url;
     if (feedUrl !== undefined) {
@@ -218,20 +218,20 @@ Pebble.addEventListener('webviewclosed', function(e) {
       if (customUrl !== '') {
         console.log('Saving custom feed URL: ' + customUrl);
         localStorage.setItem('news_feed_url', customUrl);
-        
+
         // Reset items pour forcer le rechargement
         g_items = [];
         g_current_index = 0;
-        
+
         // Vibration de confirmation
         var dict = {};
         dict[KEY_NEWS_FEED_URL] = 1; // Signal de confirmation
-        Pebble.sendAppMessage(dict, function() {
+        Pebble.sendAppMessage(dict, function () {
           console.log('Confirmation vibration sent');
-        }, function(err) {
+        }, function (err) {
           console.log('Failed to send confirmation: ' + JSON.stringify(err));
         });
-        
+
         fetchRssFeed();
       } else {
         console.log('Clearing custom feed URL');
