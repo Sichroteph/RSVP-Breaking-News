@@ -24,6 +24,9 @@ static Layer *s_canvas_layer;
 
 // News data
 static char news_title[104] = "";
+static char news_titles[50][104];  // Store up to 50 news titles
+static uint8_t news_titles_count = 0;  // Number of stored titles
+static int8_t current_news_index = -1;  // Current news index (-1 = none)
 
 // RSVP (Rapid Serial Visual Presentation)
 static char rsvp_word[32] = "";
@@ -42,7 +45,6 @@ static bool s_waiting_for_config = false;
 // News rotation
 static uint8_t news_display_count = 0;
 static uint8_t news_max_count = 5;
-static uint16_t news_interval_ms = 1000;
 static AppTimer *news_timer = NULL;
 static AppTimer *end_timer = NULL;
 
@@ -190,6 +192,14 @@ static void draw_rsvp_word(GContext *ctx) {
   graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
 
   graphics_context_set_stroke_color(ctx, GColorWhite);
+  
+  // Draw navigation indicators at top and bottom
+  graphics_context_set_text_color(ctx, GColorWhite);
+  GFont font_indicator = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+  graphics_draw_text(ctx, "Previous ->", font_indicator, GRect(0, 2, WIDTH, 16),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  graphics_draw_text(ctx, "Next ->", font_indicator, GRect(0, HEIGHT - 18, WIDTH, 16),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 
   // Draw the horizontal guide lines above and below the word (always visible)
   int line_half_width = 60; // Half width of the horizontal line
@@ -375,6 +385,8 @@ static void reset_app_state(void) {
   rsvp_word_index = 0;
   news_display_count = 0;
   news_retry_count = 0;
+  news_titles_count = 0;
+  current_news_index = -1;
   s_splash_active = true;
   s_end_screen = false;
   s_paused = false;
@@ -384,7 +396,7 @@ static void reset_app_state(void) {
   layer_mark_dirty(s_canvas_layer);
   
   // Start fresh with splash screen then request news
-  news_timer = app_timer_register(1500, news_timer_callback, NULL);
+  news_timer = app_timer_register(500, news_timer_callback, NULL);
 }
 
 // Request news from JS
@@ -495,9 +507,9 @@ static void start_rsvp_for_title(void) {
       app_timer_cancel(rsvp_start_timer);
     }
 
-    // Start a 2-second timer before showing the first word
+    // Start a 1-second timer before showing the first word
     rsvp_start_timer =
-        app_timer_register(2000, rsvp_start_timer_callback, NULL);
+        app_timer_register(1000, rsvp_start_timer_callback, NULL);
   } else {
     APP_LOG(APP_LOG_LEVEL_WARNING, "Failed to extract first word");
   }
@@ -518,19 +530,11 @@ static void rsvp_timer_callback(void *context) {
     uint16_t delay = calculate_spritz_delay(rsvp_word);
     rsvp_timer = app_timer_register(delay, rsvp_timer_callback, NULL);
   } else {
-    // End of title
+    // End of title - just show focal lines and wait for user button press
     rsvp_word[0] = '\0';
+    s_show_focal_lines_only = true;
     layer_mark_dirty(s_canvas_layer);
-    news_display_count++;
-
-    if (news_display_count >= news_max_count) {
-      // Done - show END screen and pause
-      news_timer = app_timer_register(500, news_timer_callback, NULL);
-    } else {
-      // Request next news after pause
-      news_timer =
-          app_timer_register(news_interval_ms, news_timer_callback, NULL);
-    }
+    // Don't automatically go to next - wait for user to press up/down
   }
 }
 
@@ -548,24 +552,23 @@ static void news_timer_callback(void *context) {
     layer_mark_dirty(s_canvas_layer);
   }
 
-  // Check if we reached the limit
-  if (news_display_count >= news_max_count) {
-    // Show END screen and pause
-    s_end_screen = true;
-    s_paused = true;
-    layer_mark_dirty(s_canvas_layer);
-    // Start 2 second timer to close the app
-    end_timer = app_timer_register(1000, end_timer_callback, NULL);
+  // Check if we already have all the news we need
+  if (news_titles_count >= news_max_count) {
     return;
   }
 
   // Check retry limit
   if (news_retry_count >= news_max_retries) {
+    // If we have at least some news, just stop requesting more
+    if (news_titles_count > 0) {
+      news_retry_count = 0;
+      return;
+    }
+    // No news at all - show error
     s_end_screen = true;
     s_paused = true;
     layer_mark_dirty(s_canvas_layer);
     news_retry_count = 0;
-    // Start 2 second timer to close the app
     end_timer = app_timer_register(1000, end_timer_callback, NULL);
     return;
   }
@@ -594,7 +597,23 @@ static void inbox_received_callback(DictionaryIterator *iterator,
       news_timer = NULL;
     }
 
-    start_rsvp_for_title();
+    // Store the title in our array
+    if (news_titles_count < 50) {
+      snprintf(news_titles[news_titles_count], sizeof(news_titles[0]), "%s", news_title);
+      news_titles_count++;
+      APP_LOG(APP_LOG_LEVEL_INFO, "Stored news %d, total: %d", news_titles_count - 1, news_titles_count);
+      
+      // If this is the first news, start displaying it
+      if (news_titles_count == 1) {
+        current_news_index = 0;
+        start_rsvp_for_title();
+      }
+      
+      // Request more news if we haven't reached the limit
+      if (news_titles_count < news_max_count) {
+        news_timer = app_timer_register(100, news_timer_callback, NULL);
+      }
+    }
   } else {
     APP_LOG(APP_LOG_LEVEL_WARNING, "No title found in message");
   }
@@ -681,7 +700,44 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   // Message sent successfully
 }
 
-// Button handlers - any button exits the app when paused
+// Start displaying news at given index
+static void display_news_at_index(int8_t index) {
+  if (news_titles_count == 0 || index < 0 || index >= news_titles_count) {
+    return;
+  }
+  
+  // Cancel any existing timers
+  if (rsvp_timer) {
+    app_timer_cancel(rsvp_timer);
+    rsvp_timer = NULL;
+  }
+  if (rsvp_start_timer) {
+    app_timer_cancel(rsvp_start_timer);
+    rsvp_start_timer = NULL;
+  }
+  if (news_timer) {
+    app_timer_cancel(news_timer);
+    news_timer = NULL;
+  }
+  if (end_timer) {
+    app_timer_cancel(end_timer);
+    end_timer = NULL;
+  }
+  
+  // Clear end screen state
+  s_end_screen = false;
+  s_paused = false;
+  
+  // Copy the selected title to news_title
+  current_news_index = index;
+  snprintf(news_title, sizeof(news_title), "%s", news_titles[index]);
+  APP_LOG(APP_LOG_LEVEL_INFO, "Displaying news %d: %s", index, news_title);
+  
+  // Start RSVP for this title
+  start_rsvp_for_title();
+}
+
+// Button handlers
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (s_paused && s_end_screen) {
     window_stack_pop(true);
@@ -689,15 +745,37 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if (s_paused && s_end_screen) {
-    window_stack_pop(true);
+  // Previous news
+  if (news_titles_count == 0) {
+    return;
   }
+  
+  int8_t new_index;
+  if (current_news_index <= 0) {
+    // Wrap to end
+    new_index = news_titles_count - 1;
+  } else {
+    new_index = current_news_index - 1;
+  }
+  
+  display_news_at_index(new_index);
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if (s_paused && s_end_screen) {
-    window_stack_pop(true);
+  // Next news
+  if (news_titles_count == 0) {
+    return;
   }
+  
+  int8_t new_index;
+  if (current_news_index >= news_titles_count - 1) {
+    // Wrap to beginning
+    new_index = 0;
+  } else {
+    new_index = current_news_index + 1;
+  }
+  
+  display_news_at_index(new_index);
 }
 
 static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -760,8 +838,8 @@ static void init(void) {
   APP_LOG(APP_LOG_LEVEL_INFO, "AppMessage opened with inbox=%lu, outbox=%lu",
           inbox_size, outbox_size);
 
-  // Show splash for 1.5 seconds then request first news
-  news_timer = app_timer_register(1500, news_timer_callback, NULL);
+  // Show splash for 0.5 seconds then request first news
+  news_timer = app_timer_register(500, news_timer_callback, NULL);
 }
 
 // Deinit
