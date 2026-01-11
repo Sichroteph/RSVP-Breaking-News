@@ -197,11 +197,11 @@ static void rsvp_start_timer_callback(void *context);
 // RSVP start timer callback - called after 2 seconds to start showing words
 static void rsvp_start_timer_callback(void *context) {
   rsvp_start_timer = NULL;
-  
+
   // Disable focal lines only mode and show the first word
   s_show_focal_lines_only = false;
   layer_mark_dirty(s_canvas_layer);
-  
+
   // Start the RSVP word timer
   if (rsvp_timer) {
     app_timer_cancel(rsvp_timer);
@@ -221,11 +221,11 @@ static void start_rsvp_for_title(void) {
   rsvp_word_index = 0;
   if (extract_next_word()) {
     APP_LOG(APP_LOG_LEVEL_INFO, "First word: %s", rsvp_word);
-    
+
     // Show only focal lines for 2 seconds before displaying words
     s_show_focal_lines_only = true;
     layer_mark_dirty(s_canvas_layer);
-    
+
     // Cancel any existing timers
     if (rsvp_timer) {
       app_timer_cancel(rsvp_timer);
@@ -234,9 +234,10 @@ static void start_rsvp_for_title(void) {
     if (rsvp_start_timer) {
       app_timer_cancel(rsvp_start_timer);
     }
-    
+
     // Start a 2-second timer before showing the first word
-    rsvp_start_timer = app_timer_register(2000, rsvp_start_timer_callback, NULL);
+    rsvp_start_timer =
+        app_timer_register(2000, rsvp_start_timer_callback, NULL);
   } else {
     APP_LOG(APP_LOG_LEVEL_WARNING, "Failed to extract first word");
   }
