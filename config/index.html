@@ -25,39 +25,10 @@
     <div style='color: #ffffff; text-align: center;'>
       <strong style='font-size: 1.2em;'>⚡ RSVP Speed Reading</strong>
       <p style='margin: 10px 0 0 0; font-size: 0.9em; line-height: 1.4;'>
-        RSVP (Rapid Serial Visual Presentation) affiche les mots un par un au même endroit, 
-        éliminant les mouvements oculaires et permettant une lecture ultra-rapide. 
-        La méthode Spritz peut augmenter votre vitesse de lecture jusqu'à 1000 mots/minute !
+        RSVP (Rapid Serial Visual Presentation) displays words one at a time in the same spot, 
+        eliminating eye movements and enabling ultra-fast reading. 
+        The Spritz method can boost your reading speed up to 1000 words per minute!
       </p>
-    </div>
-  </div>
-
-  <div class='item-container' style='background-color: #2a5298; border-radius: 8px; margin: 10px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
-    <div style='color: #ffffff; text-align: center;'>
-      <strong style='font-size: 1.1em;'>📰 Custom RSS Feed</strong>
-      <p style='margin: 10px 0 0 0; font-size: 0.95em;'>
-        Enter a custom RSS feed URL or use one of the preset feeds below.
-      </p>
-    </div>
-  </div>
-
-  <div class='item-container' style='border-radius: 8px; margin: 10px;'>
-    <div class='item-container-header' style='background-color: #34a853; color: white; border-radius: 8px 8px 0 0;'>⚡ Reading Speed</div>
-    <div class='item-container-content' style='padding: 15px;'>
-      <label class='item'>
-        <div class='item-input' style='text-align: center;'>
-          <input type='range' id='input_reading_speed' min='150' max='600' step='50' value='270' 
-                 style='width: 100%;' oninput='updateSpeedDisplay()'>
-        </div>
-      </label>
-      <div style='text-align: center; margin-top: 10px;'>
-        <span id='speed_display' style='font-size: 1.2em; font-weight: bold; color: #34a853;'>270 WPM</span>
-        <div style='font-size: 0.85em; color: #666; margin-top: 5px;'>
-          <span style='float: left;'>📚 Slow</span>
-          <span style='float: right;'>🚀 Fast</span>
-          <div style='clear: both;'></div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -80,6 +51,26 @@
           onclick="document.getElementById('input_news_feed_url').value='https://rss.app/feeds/tKIURCiSPtJYc7vm.xml'">Gaming</button>
         <button type='button' class='item-button' style='flex: 1; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
           onclick="document.getElementById('input_news_feed_url').value='https://rss.app/feeds/tIUyt6r7b3hyDAxs.xml'">Finance</button>
+      </div>
+    </div>
+  </div>
+
+  <div class='item-container' style='border-radius: 8px; margin: 10px;'>
+    <div class='item-container-header' style='background-color: #34a853; color: white;'>Reading Speed</div>
+    <div class='item-container-content' style='padding: 15px;'>
+      <label class='item'>
+        <div class='item-input' style='text-align: center;'>
+          <input type='range' id='input_reading_speed' min='150' max='600' step='50' value='270' 
+                 style='width: 100%;' oninput='updateSpeedDisplay()'>
+        </div>
+      </label>
+      <div style='text-align: center; margin-top: 10px;'>
+        <span id='speed_display' style='font-size: 1.2em; font-weight: bold; color: #34a853;'>270 WPM</span>
+        <div style='font-size: 0.85em; color: #666; margin-top: 5px;'>
+          <span style='float: left;'>Slow</span>
+          <span style='float: right;'>Fast</span>
+          <div style='clear: both;'></div>
+        </div>
       </div>
     </div>
   </div>

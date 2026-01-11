@@ -7,6 +7,8 @@
 #define KEY_NEWS_TITLE 172
 #define KEY_REQUEST_NEWS 173
 #define KEY_READING_SPEED_WPM 177
+#define KEY_CONFIG_OPENED 178
+#define KEY_CONFIG_RECEIVED 179
 
 // Main window and layer
 static Window *s_main_window;
@@ -27,6 +29,7 @@ static bool s_splash_active = true;
 static bool s_end_screen = false;
 static bool s_paused = false;
 static bool s_show_focal_lines_only = false;
+static bool s_waiting_for_config = false;
 
 // News rotation
 static uint8_t news_display_count = 0;
@@ -38,6 +41,9 @@ static AppTimer *end_timer = NULL;
 // News retry protection
 static uint8_t news_retry_count = 0;
 static uint8_t news_max_retries = 3;
+
+// Forward declarations
+static void news_timer_callback(void *context);
 
 // Draw splash screen with Reuters branding
 static void draw_splash_screen(GContext *ctx) {
@@ -118,15 +124,74 @@ static void draw_end_screen(GContext *ctx) {
                      NULL);
 }
 
+// Draw waiting for config screen
+static void draw_waiting_screen(GContext *ctx) {
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
+  graphics_context_set_text_color(ctx, GColorWhite);
+
+  GFont font_title = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
+  GFont font_sub = fonts_get_system_font(FONT_KEY_GOTHIC_18);
+  
+  graphics_draw_text(ctx, "Settings", font_title, GRect(0, HEIGHT / 2 - 35, WIDTH, 30),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  graphics_draw_text(ctx, "Use your phone", font_sub, GRect(0, HEIGHT / 2, WIDTH, 25),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  graphics_draw_text(ctx, "to configure...", font_sub, GRect(0, HEIGHT / 2 + 20, WIDTH, 25),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+}
+
 // Main update proc
 static void update_proc(Layer *layer, GContext *ctx) {
-  if (s_splash_active) {
+  if (s_waiting_for_config) {
+    draw_waiting_screen(ctx);
+  } else if (s_splash_active) {
     draw_splash_screen(ctx);
   } else if (s_end_screen) {
     draw_end_screen(ctx);
   } else {
     draw_rsvp_word(ctx);
   }
+}
+
+// Reset app state to restart from beginning
+static void reset_app_state(void) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Resetting app state");
+  
+  // Cancel all timers
+  if (rsvp_timer) {
+    app_timer_cancel(rsvp_timer);
+    rsvp_timer = NULL;
+  }
+  if (rsvp_start_timer) {
+    app_timer_cancel(rsvp_start_timer);
+    rsvp_start_timer = NULL;
+  }
+  if (news_timer) {
+    app_timer_cancel(news_timer);
+    news_timer = NULL;
+  }
+  if (end_timer) {
+    app_timer_cancel(end_timer);
+    end_timer = NULL;
+  }
+  
+  // Reset state variables
+  news_title[0] = '\0';
+  rsvp_word[0] = '\0';
+  rsvp_word_index = 0;
+  news_display_count = 0;
+  news_retry_count = 0;
+  s_splash_active = true;
+  s_end_screen = false;
+  s_paused = false;
+  s_show_focal_lines_only = false;
+  s_waiting_for_config = false;
+  
+  layer_mark_dirty(s_canvas_layer);
+  
+  // Start fresh with splash screen then request news
+  news_timer = app_timer_register(1500, news_timer_callback, NULL);
 }
 
 // Request news from JS
@@ -338,9 +403,65 @@ static void inbox_received_callback(DictionaryIterator *iterator,
     APP_LOG(APP_LOG_LEVEL_WARNING, "No title found in message");
   }
 
-  // Gérer la vitesse de lecture
+  // Gérer l'ouverture de la page de configuration
+  Tuple *config_opened_tuple = dict_find(iterator, KEY_CONFIG_OPENED);
+  if (config_opened_tuple) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Config page opened - showing waiting screen");
+    
+    // Arrêter tous les timers
+    if (rsvp_timer) {
+      app_timer_cancel(rsvp_timer);
+      rsvp_timer = NULL;
+    }
+    if (rsvp_start_timer) {
+      app_timer_cancel(rsvp_start_timer);
+      rsvp_start_timer = NULL;
+    }
+    if (news_timer) {
+      app_timer_cancel(news_timer);
+      news_timer = NULL;
+    }
+    if (end_timer) {
+      app_timer_cancel(end_timer);
+      end_timer = NULL;
+    }
+    
+    // Afficher l'écran d'attente
+    s_waiting_for_config = true;
+    s_paused = true;
+    layer_mark_dirty(s_canvas_layer);
+  }
+
+  // Gérer la réception des paramètres de configuration
+  Tuple *config_received_tuple = dict_find(iterator, KEY_CONFIG_RECEIVED);
+  if (config_received_tuple) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Config received - vibrating and resetting app");
+    
+    // Double vibration de confirmation
+    static const uint32_t segments[] = {100, 100, 100};
+    VibePattern pattern = {
+      .durations = segments,
+      .num_segments = ARRAY_LENGTH(segments)
+    };
+    vibes_enqueue_custom_pattern(pattern);
+    
+    // Gérer la vitesse de lecture si présente
+    Tuple *speed_tuple = dict_find(iterator, KEY_READING_SPEED_WPM);
+    if (speed_tuple) {
+      uint16_t wpm = speed_tuple->value->uint16;
+      rsvp_wpm_ms = 60000 / wpm;
+      APP_LOG(APP_LOG_LEVEL_INFO, "Reading speed set to %d WPM (%d ms)", wpm, rsvp_wpm_ms);
+      persist_write_int(KEY_READING_SPEED_WPM, wpm);
+    }
+    
+    // Réinitialiser l'état de l'application
+    reset_app_state();
+    return;
+  }
+
+  // Gérer la vitesse de lecture (si envoyée seule, sans config_received)
   Tuple *speed_tuple = dict_find(iterator, KEY_READING_SPEED_WPM);
-  if (speed_tuple) {
+  if (speed_tuple && !config_received_tuple) {
     uint16_t wpm = speed_tuple->value->uint16;
     // Convertir WPM en millisecondes: ms = 60000 / WPM
     rsvp_wpm_ms = 60000 / wpm;

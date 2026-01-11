@@ -11,9 +11,17 @@
     "watchapp": {
         "watchface": false
     },
+    "capabilities": [
+        "configurable"
+    ],
     "messageKeys": {
         "KEY_NEWS_TITLE": 172,
-        "KEY_REQUEST_NEWS": 173
+        "KEY_REQUEST_NEWS": 173,
+        "KEY_NEWS_FEED_URL": 175,
+        "KEY_NEWS_CHANNEL_TITLE": 176,
+        "KEY_READING_SPEED_WPM": 177,
+        "KEY_CONFIG_OPENED": 178,
+        "KEY_CONFIG_RECEIVED": 179
     },
     "resources": {
         "media": []
@@ -25,7 +33,11 @@
     "companyName": "CJ",
     "appKeys": {
         "KEY_NEWS_TITLE": 172,
-        "KEY_REQUEST_NEWS": 173
-    },
-    "capabilities": []
+        "KEY_REQUEST_NEWS": 173,
+        "KEY_NEWS_FEED_URL": 175,
+        "KEY_NEWS_CHANNEL_TITLE": 176,
+        "KEY_READING_SPEED_WPM": 177,
+        "KEY_CONFIG_OPENED": 178,
+        "KEY_CONFIG_RECEIVED": 179
+    }
 }
