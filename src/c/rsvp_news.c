@@ -5,7 +5,7 @@
 
 // Spritz constants for optimal word display
 #define SPRITZ_PIVOT_X (WIDTH / 2)             // X position of the pivot point
-#define SPRITZ_WORD_Y (HEIGHT / 2 + 10)        // Y position of word center
+#define SPRITZ_WORD_Y (HEIGHT / 2 - 5)         // Y position of word center (moved up 15px)
 #define SPRITZ_LINE_TOP_Y (SPRITZ_WORD_Y - 22) // Y of line above word
 #define SPRITZ_LINE_BOTTOM_Y (SPRITZ_WORD_Y + 30) // Y of line below word
 #define SPRITZ_LINE_LENGTH 20  // Length of vertical guide lines
@@ -328,6 +328,25 @@ static void draw_rsvp_word(GContext *ctx) {
                        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
                        NULL);
   }
+
+  // Draw news counter (1/5, 2/5, etc.) in bottom right corner for titles only
+  if (!s_reading_article && news_titles_count > 0 && current_news_index >= 0) {
+    char counter[8];
+    snprintf(counter, sizeof(counter), "%d/%d", current_news_index + 1, news_titles_count);
+    GFont font_counter = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+    graphics_context_set_text_color(ctx, GColorWhite);
+    graphics_draw_text(ctx, counter, font_counter,
+                       GRect(0, HEIGHT - 20, WIDTH - 5, 18),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+  }
+
+  // Draw mode indicator (TITLE or ARTICLE) in bottom left corner
+  GFont font_mode = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+  graphics_context_set_text_color(ctx, GColorWhite);
+  const char *mode_text = s_reading_article ? "ARTICLE" : "TITLE";
+  graphics_draw_text(ctx, mode_text, font_mode,
+                     GRect(5, HEIGHT - 20, 60, 18),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 }
 
 // Draw END screen

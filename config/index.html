@@ -44,14 +44,21 @@
       <div class='item-container-footer'>
         Quick presets:
       </div>
-      <div style='display: flex; justify-content: space-between; padding: 5px 0;'>
-        <button type='button' class='item-button' style='flex: 1; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
-          onclick="document.getElementById('input_news_feed_url').value='https://rss.app/feeds/SdI37Q5uDrVQuAOr.xml'">Breaking
-          News</button>
-        <button type='button' class='item-button' style='flex: 1; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
-          onclick="document.getElementById('input_news_feed_url').value='https://rss.app/feeds/tKIURCiSPtJYc7vm.xml'">Gaming</button>
-        <button type='button' class='item-button' style='flex: 1; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
-          onclick="document.getElementById('input_news_feed_url').value='https://rss.app/feeds/tIUyt6r7b3hyDAxs.xml'">Finance</button>
+      <div style='display: flex; flex-wrap: wrap; justify-content: space-between; padding: 5px 0;'>
+        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
+          onclick="document.getElementById('input_news_feed_url').value='https://feeds.bbci.co.uk/news/world/rss.xml'">BBC World</button>
+        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
+          onclick="document.getElementById('input_news_feed_url').value='https://rss.nytimes.com/services/xml/rss/nyt/World.xml'">NY Times</button>
+        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
+          onclick="document.getElementById('input_news_feed_url').value='https://feeds.npr.org/1001/rss.xml'">NPR News</button>
+      </div>
+      <div style='display: flex; flex-wrap: wrap; justify-content: space-between; padding: 5px 0;'>
+        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
+          onclick="document.getElementById('input_news_feed_url').value='https://www.theguardian.com/world/rss'">Guardian</button>
+        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
+          onclick="document.getElementById('input_news_feed_url').value='https://www.lemonde.fr/rss/une.xml'">Le Monde</button>
+        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
+          onclick="document.getElementById('input_news_feed_url').value='https://feeds.reuters.com/reuters/topNews'">Reuters</button>
       </div>
     </div>
   </div>
@@ -140,7 +147,7 @@
     var input_news_feed_url = document.getElementById('input_news_feed_url');
     var input_reading_speed = document.getElementById('input_reading_speed');
 
-    input_news_feed_url.value = localStorage['input_news_feed_url'] || 'https://rss.app/feeds/SdI37Q5uDrVQuAOr.xml';
+    input_news_feed_url.value = localStorage['input_news_feed_url'] || 'https://feeds.bbci.co.uk/news/world/rss.xml';
     input_reading_speed.value = localStorage['reading_speed_wpm'] || '270';
     updateSpeedDisplay();
   })();
