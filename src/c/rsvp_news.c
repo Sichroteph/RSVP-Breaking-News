@@ -24,9 +24,9 @@ static Layer *s_canvas_layer;
 
 // News data
 static char news_title[104] = "";
-static char news_titles[50][104];  // Store up to 50 news titles
+static char news_titles[50][104];      // Store up to 50 news titles
 static uint8_t news_titles_count = 0;  // Number of stored titles
-static int8_t current_news_index = -1;  // Current news index (-1 = none)
+static int8_t current_news_index = -1; // Current news index (-1 = none)
 
 // RSVP (Rapid Serial Visual Presentation)
 static char rsvp_word[32] = "";
@@ -41,6 +41,7 @@ static bool s_end_screen = false;
 static bool s_paused = false;
 static bool s_show_focal_lines_only = false;
 static bool s_waiting_for_config = false;
+static bool s_first_news_after_splash = true;  // True for first news, requires delay
 
 // News rotation
 static uint8_t news_display_count = 0;
@@ -85,7 +86,8 @@ static int get_pivot_index(int word_length) {
 }
 
 // Get the width of a string segment using the given font
-static int get_text_width(GContext *ctx, const char *text, int length, GFont font) {
+static int get_text_width(GContext *ctx, const char *text, int length,
+                          GFont font) {
   if (length <= 0 || !text)
     return 0;
 
@@ -192,14 +194,20 @@ static void draw_rsvp_word(GContext *ctx) {
   graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
 
   graphics_context_set_stroke_color(ctx, GColorWhite);
-  
-  // Draw navigation indicators at top and bottom
   graphics_context_set_text_color(ctx, GColorWhite);
-  GFont font_indicator = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-  graphics_draw_text(ctx, "Previous ->", font_indicator, GRect(0, 2, WIDTH, 16),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-  graphics_draw_text(ctx, "Next ->", font_indicator, GRect(0, HEIGHT - 18, WIDTH, 16),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  
+  // Show navigation indicators only during pauses (when no word is displayed)
+  if (s_show_focal_lines_only) {
+    // Full indicators with Select option during pause
+    GFont font_indicator = fonts_get_system_font(FONT_KEY_GOTHIC_18);
+    graphics_draw_text(ctx, "^ Previous", font_indicator, GRect(0, 25, WIDTH, 20),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    graphics_draw_text(ctx, "o Select", font_indicator, GRect(0, HEIGHT / 2 - 10, WIDTH, 20),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    graphics_draw_text(ctx, "v Next", font_indicator, GRect(0, HEIGHT - 45, WIDTH, 20),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    return;
+  }
 
   // Draw the horizontal guide lines above and below the word (always visible)
   int line_half_width = 60; // Half width of the horizontal line
@@ -215,11 +223,6 @@ static void draw_rsvp_word(GContext *ctx) {
   graphics_context_set_stroke_color(ctx, GColorWhite);
   graphics_draw_circle(ctx, GPoint(SPRITZ_PIVOT_X, SPRITZ_LINE_TOP_Y),
                        SPRITZ_CIRCLE_RADIUS);
-
-  // Only display word if not in "focal lines only" mode
-  if (s_show_focal_lines_only) {
-    return;
-  }
 
   // Handle empty or null word
   const char *word = (rsvp_word[0] != '\0') ? rsvp_word : "";
@@ -335,13 +338,16 @@ static void draw_waiting_screen(GContext *ctx) {
 
   GFont font_title = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
   GFont font_sub = fonts_get_system_font(FONT_KEY_GOTHIC_18);
-  
-  graphics_draw_text(ctx, "Settings", font_title, GRect(0, HEIGHT / 2 - 35, WIDTH, 30),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-  graphics_draw_text(ctx, "Use your phone", font_sub, GRect(0, HEIGHT / 2, WIDTH, 25),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-  graphics_draw_text(ctx, "to configure...", font_sub, GRect(0, HEIGHT / 2 + 20, WIDTH, 25),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+
+  graphics_draw_text(
+      ctx, "Settings", font_title, GRect(0, HEIGHT / 2 - 35, WIDTH, 30),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  graphics_draw_text(
+      ctx, "Use your phone", font_sub, GRect(0, HEIGHT / 2, WIDTH, 25),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  graphics_draw_text(
+      ctx, "to configure...", font_sub, GRect(0, HEIGHT / 2 + 20, WIDTH, 25),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 }
 
 // Main update proc
@@ -360,7 +366,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
 // Reset app state to restart from beginning
 static void reset_app_state(void) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Resetting app state");
-  
+
   // Cancel all timers
   if (rsvp_timer) {
     app_timer_cancel(rsvp_timer);
@@ -378,7 +384,7 @@ static void reset_app_state(void) {
     app_timer_cancel(end_timer);
     end_timer = NULL;
   }
-  
+
   // Reset state variables
   news_title[0] = '\0';
   rsvp_word[0] = '\0';
@@ -392,9 +398,10 @@ static void reset_app_state(void) {
   s_paused = false;
   s_show_focal_lines_only = false;
   s_waiting_for_config = false;
-  
+  s_first_news_after_splash = true;
+
   layer_mark_dirty(s_canvas_layer);
-  
+
   // Start fresh with splash screen then request news
   news_timer = app_timer_register(500, news_timer_callback, NULL);
 }
@@ -494,10 +501,6 @@ static void start_rsvp_for_title(void) {
   if (extract_next_word()) {
     APP_LOG(APP_LOG_LEVEL_INFO, "First word: %s", rsvp_word);
 
-    // Show only focal lines for 2 seconds before displaying words
-    s_show_focal_lines_only = true;
-    layer_mark_dirty(s_canvas_layer);
-
     // Cancel any existing timers
     if (rsvp_timer) {
       app_timer_cancel(rsvp_timer);
@@ -505,11 +508,24 @@ static void start_rsvp_for_title(void) {
     }
     if (rsvp_start_timer) {
       app_timer_cancel(rsvp_start_timer);
+      rsvp_start_timer = NULL;
     }
 
-    // Start a 1-second timer before showing the first word
-    rsvp_start_timer =
-        app_timer_register(1000, rsvp_start_timer_callback, NULL);
+    // Only show focal lines and delay on first news after splash
+    if (s_first_news_after_splash) {
+      s_show_focal_lines_only = true;
+      layer_mark_dirty(s_canvas_layer);
+      // Start a 1-second timer before showing the first word
+      rsvp_start_timer = app_timer_register(1000, rsvp_start_timer_callback, NULL);
+      s_first_news_after_splash = false;  // Clear flag after first use
+    } else {
+      // Instant display for button navigation
+      s_show_focal_lines_only = false;
+      layer_mark_dirty(s_canvas_layer);
+      // Start immediately with the first word delay
+      uint16_t delay = calculate_spritz_delay(rsvp_word);
+      rsvp_timer = app_timer_register(delay, rsvp_timer_callback, NULL);
+    }
   } else {
     APP_LOG(APP_LOG_LEVEL_WARNING, "Failed to extract first word");
   }
@@ -584,7 +600,7 @@ static void news_timer_callback(void *context) {
 static void inbox_received_callback(DictionaryIterator *iterator,
                                     void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Received message from JS");
-  
+
   Tuple *news_title_tuple = dict_find(iterator, KEY_NEWS_TITLE);
   if (news_title_tuple) {
     snprintf(news_title, sizeof(news_title), "%s",
@@ -599,16 +615,18 @@ static void inbox_received_callback(DictionaryIterator *iterator,
 
     // Store the title in our array
     if (news_titles_count < 50) {
-      snprintf(news_titles[news_titles_count], sizeof(news_titles[0]), "%s", news_title);
+      snprintf(news_titles[news_titles_count], sizeof(news_titles[0]), "%s",
+               news_title);
       news_titles_count++;
-      APP_LOG(APP_LOG_LEVEL_INFO, "Stored news %d, total: %d", news_titles_count - 1, news_titles_count);
-      
+      APP_LOG(APP_LOG_LEVEL_INFO, "Stored news %d, total: %d",
+              news_titles_count - 1, news_titles_count);
+
       // If this is the first news, start displaying it
       if (news_titles_count == 1) {
         current_news_index = 0;
         start_rsvp_for_title();
       }
-      
+
       // Request more news if we haven't reached the limit
       if (news_titles_count < news_max_count) {
         news_timer = app_timer_register(100, news_timer_callback, NULL);
@@ -622,7 +640,7 @@ static void inbox_received_callback(DictionaryIterator *iterator,
   Tuple *config_opened_tuple = dict_find(iterator, KEY_CONFIG_OPENED);
   if (config_opened_tuple) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Config page opened - showing waiting screen");
-    
+
     // Arrêter tous les timers
     if (rsvp_timer) {
       app_timer_cancel(rsvp_timer);
@@ -640,7 +658,7 @@ static void inbox_received_callback(DictionaryIterator *iterator,
       app_timer_cancel(end_timer);
       end_timer = NULL;
     }
-    
+
     // Afficher l'écran d'attente
     s_waiting_for_config = true;
     s_paused = true;
@@ -650,25 +668,25 @@ static void inbox_received_callback(DictionaryIterator *iterator,
   // Gérer la réception des paramètres de configuration
   Tuple *config_received_tuple = dict_find(iterator, KEY_CONFIG_RECEIVED);
   if (config_received_tuple) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Config received - vibrating and resetting app");
-    
+    APP_LOG(APP_LOG_LEVEL_INFO,
+            "Config received - vibrating and resetting app");
+
     // Double vibration de confirmation
     static const uint32_t segments[] = {100, 100, 100};
-    VibePattern pattern = {
-      .durations = segments,
-      .num_segments = ARRAY_LENGTH(segments)
-    };
+    VibePattern pattern = {.durations = segments,
+                           .num_segments = ARRAY_LENGTH(segments)};
     vibes_enqueue_custom_pattern(pattern);
-    
+
     // Gérer la vitesse de lecture si présente
     Tuple *speed_tuple = dict_find(iterator, KEY_READING_SPEED_WPM);
     if (speed_tuple) {
       uint16_t wpm = speed_tuple->value->uint16;
       rsvp_wpm_ms = 60000 / wpm;
-      APP_LOG(APP_LOG_LEVEL_INFO, "Reading speed set to %d WPM (%d ms)", wpm, rsvp_wpm_ms);
+      APP_LOG(APP_LOG_LEVEL_INFO, "Reading speed set to %d WPM (%d ms)", wpm,
+              rsvp_wpm_ms);
       persist_write_int(KEY_READING_SPEED_WPM, wpm);
     }
-    
+
     // Réinitialiser l'état de l'application
     reset_app_state();
     return;
@@ -680,8 +698,9 @@ static void inbox_received_callback(DictionaryIterator *iterator,
     uint16_t wpm = speed_tuple->value->uint16;
     // Convertir WPM en millisecondes: ms = 60000 / WPM
     rsvp_wpm_ms = 60000 / wpm;
-    APP_LOG(APP_LOG_LEVEL_INFO, "Reading speed set to %d WPM (%d ms)", wpm, rsvp_wpm_ms);
-    
+    APP_LOG(APP_LOG_LEVEL_INFO, "Reading speed set to %d WPM (%d ms)", wpm,
+            rsvp_wpm_ms);
+
     // Sauvegarder dans persist storage
     persist_write_int(KEY_READING_SPEED_WPM, wpm);
   }
@@ -705,7 +724,7 @@ static void display_news_at_index(int8_t index) {
   if (news_titles_count == 0 || index < 0 || index >= news_titles_count) {
     return;
   }
-  
+
   // Cancel any existing timers
   if (rsvp_timer) {
     app_timer_cancel(rsvp_timer);
@@ -723,16 +742,16 @@ static void display_news_at_index(int8_t index) {
     app_timer_cancel(end_timer);
     end_timer = NULL;
   }
-  
+
   // Clear end screen state
   s_end_screen = false;
   s_paused = false;
-  
+
   // Copy the selected title to news_title
   current_news_index = index;
   snprintf(news_title, sizeof(news_title), "%s", news_titles[index]);
   APP_LOG(APP_LOG_LEVEL_INFO, "Displaying news %d: %s", index, news_title);
-  
+
   // Start RSVP for this title
   start_rsvp_for_title();
 }
@@ -749,7 +768,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (news_titles_count == 0) {
     return;
   }
-  
+
   int8_t new_index;
   if (current_news_index <= 0) {
     // Wrap to end
@@ -757,7 +776,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   } else {
     new_index = current_news_index - 1;
   }
-  
+
   display_news_at_index(new_index);
 }
 
@@ -766,7 +785,7 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (news_titles_count == 0) {
     return;
   }
-  
+
   int8_t new_index;
   if (current_news_index >= news_titles_count - 1) {
     // Wrap to beginning
@@ -774,7 +793,7 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
   } else {
     new_index = current_news_index + 1;
   }
-  
+
   display_news_at_index(new_index);
 }
 
@@ -820,7 +839,8 @@ static void init(void) {
   if (persist_exists(KEY_READING_SPEED_WPM)) {
     uint16_t wpm = persist_read_int(KEY_READING_SPEED_WPM);
     rsvp_wpm_ms = 60000 / wpm;
-    APP_LOG(APP_LOG_LEVEL_INFO, "Loaded reading speed: %d WPM (%d ms)", wpm, rsvp_wpm_ms);
+    APP_LOG(APP_LOG_LEVEL_INFO, "Loaded reading speed: %d WPM (%d ms)", wpm,
+            rsvp_wpm_ms);
   } else {
     APP_LOG(APP_LOG_LEVEL_INFO, "Using default reading speed: 273 WPM");
   }
