@@ -20,9 +20,15 @@
     "watchapp": {
       "watchface": false
     },
+    "capabilities": [
+      "configurable"
+    ],
     "messageKeys": {
       "KEY_NEWS_TITLE": 172,
-      "KEY_REQUEST_NEWS": 173
+      "KEY_REQUEST_NEWS": 173,
+      "KEY_NEWS_FEED_URL": 175,
+      "KEY_NEWS_CHANNEL_TITLE": 176,
+      "KEY_READING_SPEED_WPM": 177
     },
     "resources": {
       "media": []
