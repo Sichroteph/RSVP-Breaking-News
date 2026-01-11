@@ -15,9 +15,11 @@ var KEY_NEWS_CHANNEL_TITLE = 176;
 var KEY_READING_SPEED_WPM = 177;
 var KEY_CONFIG_OPENED = 178;
 var KEY_CONFIG_RECEIVED = 179;
+var KEY_REQUEST_ARTICLE = 180;
+var KEY_NEWS_ARTICLE = 181;
 
 // State
-var g_items = [];
+var g_items = [];        // Array of {title: string, description: string}
 var g_current_index = 0;
 var g_channel_title = '';
 
@@ -123,23 +125,40 @@ function parseRssFeed(xmlText) {
     }
   }
 
-  // Parse items
+  // Parse items (title + description)
   g_items = [];
   for (var i = 0; i < items.length && i < 50; i++) {
     var titleNode = items[i].getElementsByTagName('title')[0];
+    var descNode = items[i].getElementsByTagName('description')[0];
+    
     if (titleNode) {
       var title = titleNode.textContent || '';
       title = decodeHtmlEntities(title);
       title = title.replace(/<[^>]*>/g, '');
       title = title.trim();
 
+      var description = '';
+      if (descNode) {
+        description = descNode.textContent || '';
+        description = decodeHtmlEntities(description);
+        description = description.replace(/<[^>]*>/g, '');  // Remove HTML tags
+        description = description.trim();
+        // Limit description length to 500 chars to fit in Pebble memory
+        if (description.length > 500) {
+          description = description.substring(0, 497) + '...';
+        }
+      }
+
       if (title.length > 0) {
-        g_items.push(title);
+        g_items.push({
+          title: title,
+          description: description
+        });
       }
     }
   }
 
-  console.log('Parsed ' + g_items.length + ' news items');
+  console.log('Parsed ' + g_items.length + ' news items with descriptions');
   g_current_index = 0;
 
   if (g_items.length > 0) {
@@ -157,16 +176,36 @@ function sendNextNewsItem() {
     return;
   }
 
-  var title = g_items[g_current_index];
-  console.log('Sending item ' + (g_current_index + 1) + ': ' + title);
+  var item = g_items[g_current_index];
+  console.log('Sending item ' + (g_current_index + 1) + ': ' + item.title);
 
   var dict = {};
-  dict[KEY_NEWS_TITLE] = title;
+  dict[KEY_NEWS_TITLE] = item.title;
   Pebble.sendAppMessage(dict, function () {
     console.log('Message sent successfully');
     g_current_index++;
   }, function (e) {
     console.log('Failed to send message: ' + JSON.stringify(e));
+  });
+}
+
+// Send article for a specific index to Pebble
+function sendArticle(index) {
+  if (index < 0 || index >= g_items.length) {
+    console.log('Invalid article index: ' + index);
+    return;
+  }
+
+  var item = g_items[index];
+  var article = item.description || 'No article content available.';
+  console.log('Sending article for item ' + index + ' (' + article.length + ' chars)');
+
+  var dict = {};
+  dict[KEY_NEWS_ARTICLE] = article;
+  Pebble.sendAppMessage(dict, function () {
+    console.log('Article sent successfully');
+  }, function (e) {
+    console.log('Failed to send article: ' + JSON.stringify(e));
   });
 }
 
@@ -178,6 +217,14 @@ Pebble.addEventListener('ready', function (e) {
 
 Pebble.addEventListener('appmessage', function (e) {
   console.log('Received message from Pebble: ' + JSON.stringify(e.payload));
+
+  // Handle article request
+  var articleIndex = e.payload[KEY_REQUEST_ARTICLE] || e.payload['KEY_REQUEST_ARTICLE'] || e.payload['180'];
+  if (articleIndex !== undefined) {
+    console.log('Article request received for index: ' + articleIndex);
+    sendArticle(parseInt(articleIndex));
+    return;
+  }
 
   // Vérifier à la fois la clé numérique et le nom de clé
   if (e.payload[KEY_REQUEST_NEWS] || e.payload['KEY_REQUEST_NEWS'] || e.payload['173']) {

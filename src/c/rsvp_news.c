@@ -17,6 +17,8 @@
 #define KEY_READING_SPEED_WPM 177
 #define KEY_CONFIG_OPENED 178
 #define KEY_CONFIG_RECEIVED 179
+#define KEY_REQUEST_ARTICLE 180
+#define KEY_NEWS_ARTICLE 181
 
 // Main window and layer
 static Window *s_main_window;
@@ -27,6 +29,11 @@ static char news_title[104] = "";
 static char news_titles[50][104];      // Store up to 50 news titles
 static uint8_t news_titles_count = 0;  // Number of stored titles
 static int8_t current_news_index = -1; // Current news index (-1 = none)
+
+// Article data (only store one at a time to save memory)
+static char news_article[512] = "";    // Current article content
+static bool s_reading_article = false; // True when reading article content
+static int8_t s_article_news_index = -1; // Index of the news whose article we're reading
 
 // RSVP (Rapid Serial Visual Presentation)
 static char rsvp_word[32] = "";
@@ -399,6 +406,9 @@ static void reset_app_state(void) {
   s_show_focal_lines_only = false;
   s_waiting_for_config = false;
   s_first_news_after_splash = true;
+  s_reading_article = false;
+  s_article_news_index = -1;
+  news_article[0] = '\0';
 
   layer_mark_dirty(s_canvas_layer);
 
@@ -420,13 +430,28 @@ static void request_news_from_js(void) {
   }
 }
 
-// Extract next word from news_title
+// Request article for current news index from JS
+static void request_article_from_js(uint8_t index) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Requesting article %d from JS", index);
+  DictionaryIterator *iter;
+  AppMessageResult result = app_message_outbox_begin(&iter);
+  if (result == APP_MSG_OK) {
+    dict_write_uint8(iter, KEY_REQUEST_ARTICLE, index);
+    app_message_outbox_send();
+    APP_LOG(APP_LOG_LEVEL_INFO, "Article request sent for index %d", index);
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to begin outbox: %d", (int)result);
+  }
+}
+
+// Extract next word from the current text (title or article)
 static bool extract_next_word(void) {
-  const char *p = news_title;
-  uint8_t word_count = 0;
-  uint8_t word_start = 0;
-  uint8_t word_len = 0;
-  uint8_t i = 0;
+  // Use article if reading article, otherwise use title
+  const char *p = s_reading_article ? news_article : news_title;
+  uint16_t word_count = 0;
+  uint16_t word_start = 0;
+  uint16_t word_len = 0;
+  uint16_t i = 0;
   bool in_word = false;
 
   while (p[i] != '\0') {
@@ -531,6 +556,77 @@ static void start_rsvp_for_title(void) {
   }
 }
 
+// Forward declaration for after article callback
+static void after_article_splash_callback(void *context);
+
+// Show splash and then go to next title after article reading
+static void show_splash_then_next_title(void) {
+  // Cancel any existing timers
+  if (rsvp_timer) {
+    app_timer_cancel(rsvp_timer);
+    rsvp_timer = NULL;
+  }
+  if (rsvp_start_timer) {
+    app_timer_cancel(rsvp_start_timer);
+    rsvp_start_timer = NULL;
+  }
+  
+  // Clear article mode
+  s_reading_article = false;
+  news_article[0] = '\0';
+  rsvp_word[0] = '\0';
+  
+  // Show splash screen
+  s_splash_active = true;
+  layer_mark_dirty(s_canvas_layer);
+  
+  // After 500ms, go to next title
+  news_timer = app_timer_register(500, after_article_splash_callback, NULL);
+}
+
+// Callback after splash screen when returning from article
+static void after_article_splash_callback(void *context) {
+  news_timer = NULL;
+  s_splash_active = false;
+  
+  // Move to next title
+  int8_t next_index;
+  if (s_article_news_index >= news_titles_count - 1) {
+    next_index = 0;  // Wrap to beginning
+  } else {
+    next_index = s_article_news_index + 1;
+  }
+  
+  s_article_news_index = -1;
+  current_news_index = next_index;
+  snprintf(news_title, sizeof(news_title), "%s", news_titles[next_index]);
+  
+  // Start showing the title with delay (like after splash)
+  s_first_news_after_splash = true;
+  start_rsvp_for_title();
+}
+
+// Start reading the article content
+static void start_article_reading(void) {
+  if (news_article[0] == '\0') {
+    APP_LOG(APP_LOG_LEVEL_WARNING, "No article content to read");
+    return;
+  }
+  
+  APP_LOG(APP_LOG_LEVEL_INFO, "Starting article reading");
+  s_reading_article = true;
+  rsvp_word_index = 0;
+  
+  if (extract_next_word()) {
+    s_show_focal_lines_only = false;
+    layer_mark_dirty(s_canvas_layer);
+    
+    // Start the timer
+    uint16_t delay = calculate_spritz_delay(rsvp_word);
+    rsvp_timer = app_timer_register(delay, rsvp_timer_callback, NULL);
+  }
+}
+
 // RSVP timer callback
 static void rsvp_timer_callback(void *context) {
   rsvp_timer = NULL;
@@ -546,11 +642,17 @@ static void rsvp_timer_callback(void *context) {
     uint16_t delay = calculate_spritz_delay(rsvp_word);
     rsvp_timer = app_timer_register(delay, rsvp_timer_callback, NULL);
   } else {
-    // End of title - just show focal lines and wait for user button press
+    // End of text
     rsvp_word[0] = '\0';
-    s_show_focal_lines_only = true;
-    layer_mark_dirty(s_canvas_layer);
-    // Don't automatically go to next - wait for user to press up/down
+    
+    if (s_reading_article) {
+      // End of article - show splash then go to next title
+      show_splash_then_next_title();
+    } else {
+      // End of title - show focal lines and wait for user button press
+      s_show_focal_lines_only = true;
+      layer_mark_dirty(s_canvas_layer);
+    }
   }
 }
 
@@ -600,6 +702,18 @@ static void news_timer_callback(void *context) {
 static void inbox_received_callback(DictionaryIterator *iterator,
                                     void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Received message from JS");
+
+  // Handle article content
+  Tuple *article_tuple = dict_find(iterator, KEY_NEWS_ARTICLE);
+  if (article_tuple) {
+    snprintf(news_article, sizeof(news_article), "%s",
+             article_tuple->value->cstring);
+    APP_LOG(APP_LOG_LEVEL_INFO, "Received article (%d chars)", (int)strlen(news_article));
+    
+    // Start reading the article
+    start_article_reading();
+    return;  // Don't process other messages
+  }
 
   Tuple *news_title_tuple = dict_find(iterator, KEY_NEWS_TITLE);
   if (news_title_tuple) {
@@ -752,18 +866,60 @@ static void display_news_at_index(int8_t index) {
   snprintf(news_title, sizeof(news_title), "%s", news_titles[index]);
   APP_LOG(APP_LOG_LEVEL_INFO, "Displaying news %d: %s", index, news_title);
 
+  // Clear article mode when switching titles
+  s_reading_article = false;
+  news_article[0] = '\0';
+
   // Start RSVP for this title
   start_rsvp_for_title();
 }
 
 // Button handlers
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+  // If reading article, stop and go to splash then next title
+  if (s_reading_article) {
+    show_splash_then_next_title();
+    return;
+  }
+  
+  // If at end screen, exit app
   if (s_paused && s_end_screen) {
     window_stack_pop(true);
+    return;
+  }
+  
+  // If we have a valid news index, request the article
+  if (current_news_index >= 0 && current_news_index < news_titles_count) {
+    // Stop any current title reading
+    if (rsvp_timer) {
+      app_timer_cancel(rsvp_timer);
+      rsvp_timer = NULL;
+    }
+    if (rsvp_start_timer) {
+      app_timer_cancel(rsvp_start_timer);
+      rsvp_start_timer = NULL;
+    }
+    
+    // Remember which news we're reading the article for
+    s_article_news_index = current_news_index;
+    
+    // Request the article from JS
+    request_article_from_js(current_news_index);
+    
+    // Show waiting state
+    rsvp_word[0] = '\0';
+    s_show_focal_lines_only = true;
+    layer_mark_dirty(s_canvas_layer);
   }
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
+  // If reading article, stop and go to splash then next title
+  if (s_reading_article) {
+    show_splash_then_next_title();
+    return;
+  }
+  
   // Previous news
   if (news_titles_count == 0) {
     return;
@@ -781,6 +937,12 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
+  // If reading article, stop and go to splash then next title
+  if (s_reading_article) {
+    show_splash_then_next_title();
+    return;
+  }
+  
   // Next news
   if (news_titles_count == 0) {
     return;
@@ -798,7 +960,13 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
-  // Always allow back to exit
+  // If reading article, stop and go to splash then next title
+  if (s_reading_article) {
+    show_splash_then_next_title();
+    return;
+  }
+  
+  // Otherwise, exit the app
   window_stack_pop(true);
 }
 
