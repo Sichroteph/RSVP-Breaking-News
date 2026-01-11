@@ -39,7 +39,7 @@ static int8_t s_article_news_index =
 // RSVP (Rapid Serial Visual Presentation)
 static char rsvp_word[32] = "";
 static uint8_t rsvp_word_index = 0;
-static uint16_t rsvp_wpm_ms = 220; // 220ms per word (~273 WPM)
+static uint16_t rsvp_wpm_ms = 150; // 150ms per word (400 WPM)
 static AppTimer *rsvp_timer = NULL;
 static AppTimer *rsvp_start_timer = NULL;
 
@@ -207,17 +207,17 @@ static void draw_rsvp_word(GContext *ctx) {
 
   // Show navigation indicators only during pauses (when no word is displayed)
   if (s_show_focal_lines_only) {
-    // Full indicators with Select option during pause
+    // Full indicators with Select option during pause - aligned to right
     GFont font_indicator = fonts_get_system_font(FONT_KEY_GOTHIC_18);
     graphics_draw_text(
-        ctx, "^ Previous", font_indicator, GRect(0, 25, WIDTH, 20),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+        ctx, "Previous ^", font_indicator, GRect(0, 25, WIDTH - 5, 20),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
     graphics_draw_text(
-        ctx, "o Select", font_indicator, GRect(0, HEIGHT / 2 - 10, WIDTH, 20),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+        ctx, "Select o", font_indicator, GRect(0, HEIGHT / 2 - 10, WIDTH - 5, 20),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
     graphics_draw_text(
-        ctx, "v Next", font_indicator, GRect(0, HEIGHT - 45, WIDTH, 20),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+        ctx, "Next v", font_indicator, GRect(0, HEIGHT - 45, WIDTH - 5, 20),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
     return;
   }
 
@@ -541,19 +541,18 @@ static void start_rsvp_for_title(void) {
       rsvp_start_timer = NULL;
     }
 
-    // Only show focal lines and delay on first news after splash
+    // On first news after splash, start immediately without help screen
+    // On subsequent news (after navigation), also start immediately
+    s_show_focal_lines_only = false;
+    layer_mark_dirty(s_canvas_layer);
+    
     if (s_first_news_after_splash) {
-      s_show_focal_lines_only = true;
-      layer_mark_dirty(s_canvas_layer);
-      // Start a 1-second timer before showing the first word
+      // First news: small delay before showing words
       rsvp_start_timer =
-          app_timer_register(1000, rsvp_start_timer_callback, NULL);
+          app_timer_register(500, rsvp_start_timer_callback, NULL);
       s_first_news_after_splash = false; // Clear flag after first use
     } else {
       // Instant display for button navigation
-      s_show_focal_lines_only = false;
-      layer_mark_dirty(s_canvas_layer);
-      // Start immediately with the first word delay
       uint16_t delay = calculate_spritz_delay(rsvp_word);
       rsvp_timer = app_timer_register(delay, rsvp_timer_callback, NULL);
     }
@@ -1017,7 +1016,7 @@ static void init(void) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Loaded reading speed: %d WPM (%d ms)", wpm,
             rsvp_wpm_ms);
   } else {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Using default reading speed: 273 WPM");
+    APP_LOG(APP_LOG_LEVEL_INFO, "Using default reading speed: 400 WPM");
   }
 
   // Register AppMessage handlers
@@ -1033,8 +1032,8 @@ static void init(void) {
   APP_LOG(APP_LOG_LEVEL_INFO, "AppMessage opened with inbox=%lu, outbox=%lu",
           inbox_size, outbox_size);
 
-  // Show splash for 0.5 seconds then request first news
-  news_timer = app_timer_register(500, news_timer_callback, NULL);
+  // Show splash for 1 second then request first news
+  news_timer = app_timer_register(1000, news_timer_callback, NULL);
 }
 
 // Deinit
