@@ -130,7 +130,7 @@ function parseRssFeed(xmlText) {
   for (var i = 0; i < items.length && i < 50; i++) {
     var titleNode = items[i].getElementsByTagName('title')[0];
     var descNode = items[i].getElementsByTagName('description')[0];
-    
+
     if (titleNode) {
       var title = titleNode.textContent || '';
       title = decodeHtmlEntities(title);
@@ -246,7 +246,7 @@ Pebble.addEventListener('appmessage', function (e) {
 
 Pebble.addEventListener('showConfiguration', function (e) {
   console.log('Opening configuration page');
-  
+
   // Envoyer un signal à la montre pour afficher l'écran d'attente
   var dict = {};
   dict[KEY_CONFIG_OPENED] = 1;
@@ -255,7 +255,7 @@ Pebble.addEventListener('showConfiguration', function (e) {
   }, function (err) {
     console.log('Failed to send config opened signal: ' + JSON.stringify(err));
   });
-  
+
   Pebble.openURL(CONFIG_URL);
 });
 
@@ -308,14 +308,14 @@ Pebble.addEventListener('webviewclosed', function (e) {
       console.log('Saving reading speed: ' + readingSpeed + ' WPM');
       localStorage.setItem('reading_speed_wpm', readingSpeed);
     }
-    
+
     // Envoyer toutes les données de config en une seule fois avec signal de réception
     var configDict = {};
     configDict[KEY_CONFIG_RECEIVED] = 1; // Signal de réception des paramètres (déclenche vibration + reset)
     if (readingSpeed !== undefined) {
       configDict[KEY_READING_SPEED_WPM] = parseInt(readingSpeed);
     }
-    
+
     Pebble.sendAppMessage(configDict, function () {
       console.log('Config received signal and speed sent');
       // Recharger le flux RSS après envoi des paramètres

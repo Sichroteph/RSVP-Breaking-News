@@ -33,7 +33,8 @@ static int8_t current_news_index = -1; // Current news index (-1 = none)
 // Article data (only store one at a time to save memory)
 static char news_article[512] = "";    // Current article content
 static bool s_reading_article = false; // True when reading article content
-static int8_t s_article_news_index = -1; // Index of the news whose article we're reading
+static int8_t s_article_news_index =
+    -1; // Index of the news whose article we're reading
 
 // RSVP (Rapid Serial Visual Presentation)
 static char rsvp_word[32] = "";
@@ -48,7 +49,8 @@ static bool s_end_screen = false;
 static bool s_paused = false;
 static bool s_show_focal_lines_only = false;
 static bool s_waiting_for_config = false;
-static bool s_first_news_after_splash = true;  // True for first news, requires delay
+static bool s_first_news_after_splash =
+    true; // True for first news, requires delay
 
 // News rotation
 static uint8_t news_display_count = 0;
@@ -202,17 +204,20 @@ static void draw_rsvp_word(GContext *ctx) {
 
   graphics_context_set_stroke_color(ctx, GColorWhite);
   graphics_context_set_text_color(ctx, GColorWhite);
-  
+
   // Show navigation indicators only during pauses (when no word is displayed)
   if (s_show_focal_lines_only) {
     // Full indicators with Select option during pause
     GFont font_indicator = fonts_get_system_font(FONT_KEY_GOTHIC_18);
-    graphics_draw_text(ctx, "^ Previous", font_indicator, GRect(0, 25, WIDTH, 20),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-    graphics_draw_text(ctx, "o Select", font_indicator, GRect(0, HEIGHT / 2 - 10, WIDTH, 20),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-    graphics_draw_text(ctx, "v Next", font_indicator, GRect(0, HEIGHT - 45, WIDTH, 20),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    graphics_draw_text(
+        ctx, "^ Previous", font_indicator, GRect(0, 25, WIDTH, 20),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    graphics_draw_text(
+        ctx, "o Select", font_indicator, GRect(0, HEIGHT / 2 - 10, WIDTH, 20),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    graphics_draw_text(
+        ctx, "v Next", font_indicator, GRect(0, HEIGHT - 45, WIDTH, 20),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
     return;
   }
 
@@ -541,8 +546,9 @@ static void start_rsvp_for_title(void) {
       s_show_focal_lines_only = true;
       layer_mark_dirty(s_canvas_layer);
       // Start a 1-second timer before showing the first word
-      rsvp_start_timer = app_timer_register(1000, rsvp_start_timer_callback, NULL);
-      s_first_news_after_splash = false;  // Clear flag after first use
+      rsvp_start_timer =
+          app_timer_register(1000, rsvp_start_timer_callback, NULL);
+      s_first_news_after_splash = false; // Clear flag after first use
     } else {
       // Instant display for button navigation
       s_show_focal_lines_only = false;
@@ -570,16 +576,16 @@ static void show_splash_then_next_title(void) {
     app_timer_cancel(rsvp_start_timer);
     rsvp_start_timer = NULL;
   }
-  
+
   // Clear article mode
   s_reading_article = false;
   news_article[0] = '\0';
   rsvp_word[0] = '\0';
-  
+
   // Show splash screen
   s_splash_active = true;
   layer_mark_dirty(s_canvas_layer);
-  
+
   // After 500ms, go to next title
   news_timer = app_timer_register(500, after_article_splash_callback, NULL);
 }
@@ -588,19 +594,19 @@ static void show_splash_then_next_title(void) {
 static void after_article_splash_callback(void *context) {
   news_timer = NULL;
   s_splash_active = false;
-  
+
   // Move to next title
   int8_t next_index;
   if (s_article_news_index >= news_titles_count - 1) {
-    next_index = 0;  // Wrap to beginning
+    next_index = 0; // Wrap to beginning
   } else {
     next_index = s_article_news_index + 1;
   }
-  
+
   s_article_news_index = -1;
   current_news_index = next_index;
   snprintf(news_title, sizeof(news_title), "%s", news_titles[next_index]);
-  
+
   // Start showing the title with delay (like after splash)
   s_first_news_after_splash = true;
   start_rsvp_for_title();
@@ -612,15 +618,15 @@ static void start_article_reading(void) {
     APP_LOG(APP_LOG_LEVEL_WARNING, "No article content to read");
     return;
   }
-  
+
   APP_LOG(APP_LOG_LEVEL_INFO, "Starting article reading");
   s_reading_article = true;
   rsvp_word_index = 0;
-  
+
   if (extract_next_word()) {
     s_show_focal_lines_only = false;
     layer_mark_dirty(s_canvas_layer);
-    
+
     // Start the timer
     uint16_t delay = calculate_spritz_delay(rsvp_word);
     rsvp_timer = app_timer_register(delay, rsvp_timer_callback, NULL);
@@ -644,7 +650,7 @@ static void rsvp_timer_callback(void *context) {
   } else {
     // End of text
     rsvp_word[0] = '\0';
-    
+
     if (s_reading_article) {
       // End of article - show splash then go to next title
       show_splash_then_next_title();
@@ -708,11 +714,12 @@ static void inbox_received_callback(DictionaryIterator *iterator,
   if (article_tuple) {
     snprintf(news_article, sizeof(news_article), "%s",
              article_tuple->value->cstring);
-    APP_LOG(APP_LOG_LEVEL_INFO, "Received article (%d chars)", (int)strlen(news_article));
-    
+    APP_LOG(APP_LOG_LEVEL_INFO, "Received article (%d chars)",
+            (int)strlen(news_article));
+
     // Start reading the article
     start_article_reading();
-    return;  // Don't process other messages
+    return; // Don't process other messages
   }
 
   Tuple *news_title_tuple = dict_find(iterator, KEY_NEWS_TITLE);
@@ -881,13 +888,13 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
     show_splash_then_next_title();
     return;
   }
-  
+
   // If at end screen, exit app
   if (s_paused && s_end_screen) {
     window_stack_pop(true);
     return;
   }
-  
+
   // If we have a valid news index, request the article
   if (current_news_index >= 0 && current_news_index < news_titles_count) {
     // Stop any current title reading
@@ -899,13 +906,13 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
       app_timer_cancel(rsvp_start_timer);
       rsvp_start_timer = NULL;
     }
-    
+
     // Remember which news we're reading the article for
     s_article_news_index = current_news_index;
-    
+
     // Request the article from JS
     request_article_from_js(current_news_index);
-    
+
     // Show waiting state
     rsvp_word[0] = '\0';
     s_show_focal_lines_only = true;
@@ -919,7 +926,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
     show_splash_then_next_title();
     return;
   }
-  
+
   // Previous news
   if (news_titles_count == 0) {
     return;
@@ -942,7 +949,7 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
     show_splash_then_next_title();
     return;
   }
-  
+
   // Next news
   if (news_titles_count == 0) {
     return;
@@ -965,7 +972,7 @@ static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
     show_splash_then_next_title();
     return;
   }
-  
+
   // Otherwise, exit the app
   window_stack_pop(true);
 }
