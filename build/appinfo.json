@@ -21,7 +21,7 @@
     "name": "rsvp-breaking-news",
     "shortName": "RSVP News Reader",
     "longName": "RSVP News Reader",
-    "versionLabel": "1.4",
+    "versionLabel": "1.1",
     "companyName": "CJ",
     "appKeys": {
         "KEY_NEWS_TITLE": 172,

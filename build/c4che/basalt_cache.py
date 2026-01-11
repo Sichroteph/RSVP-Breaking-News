@@ -46,7 +46,7 @@ PEBBLE_SDK_ROOT = '/home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble'
 PLATFORM = {'NAME': 'basalt', 'MAX_APP_BINARY_SIZE': 65536, 'MAX_APP_MEMORY_SIZE': 65536, 'MAX_WORKER_MEMORY_SIZE': 10240, 'MAX_RESOURCES_SIZE_APPSTORE': 262144, 'MAX_RESOURCES_SIZE': 1048576, 'DEFINES': ['PBL_PLATFORM_BASALT', 'PBL_COLOR', 'PBL_RECT', 'PBL_MICROPHONE', 'PBL_SMARTSTRAP', 'PBL_HEALTH', 'PBL_COMPASS', 'PBL_SMARTSTRAP_POWER', 'PBL_DISPLAY_WIDTH=144', 'PBL_DISPLAY_HEIGHT=168'], 'BUILD_DIR': 'basalt', 'BUNDLE_BIN_DIR': 'basalt', 'ADDITIONAL_TEXT_LINES_FOR_PEBBLE_H': [], 'MAX_FONT_GLYPH_SIZE': 256, 'TAGS': ['basalt', 'color', 'rect', 'mic', 'strap', 'strappower', 'compass', 'health', '144w', '168h']}
 PLATFORM_NAME = 'basalt'
 PREFIX = '/usr/local'
-PROJECT_INFO = {'displayName': 'RSVP News Reader', 'uuid': 'a1b2c3d4-5e6f-7190-ab12-cd34ef567890', 'sdkVersion': '3', 'enableMultiJS': False, 'targetPlatforms': ['aplite', 'basalt', 'diorite'], 'watchapp': {'watchface': False}, 'messageKeys': {'KEY_NEWS_TITLE': 172, 'KEY_REQUEST_NEWS': 173}, 'resources': {'media': []}, 'name': 'rsvp-breaking-news', 'shortName': 'RSVP News Reader', 'longName': 'RSVP News Reader', 'versionLabel': '1.4', 'companyName': 'CJ', 'appKeys': {'KEY_NEWS_TITLE': 172, 'KEY_REQUEST_NEWS': 173}}
+PROJECT_INFO = {'displayName': 'RSVP News Reader', 'uuid': 'a1b2c3d4-5e6f-7190-ab12-cd34ef567890', 'sdkVersion': '3', 'enableMultiJS': False, 'targetPlatforms': ['aplite', 'basalt', 'diorite'], 'watchapp': {'watchface': False}, 'messageKeys': {'KEY_NEWS_TITLE': 172, 'KEY_REQUEST_NEWS': 173}, 'resources': {'media': []}, 'name': 'rsvp-breaking-news', 'shortName': 'RSVP News Reader', 'longName': 'RSVP News Reader', 'versionLabel': '1.1', 'companyName': 'CJ', 'appKeys': {'KEY_NEWS_TITLE': 172, 'KEY_REQUEST_NEWS': 173}}
 REQUESTED_PLATFORMS = ['aplite', 'basalt', 'diorite']
 RESOURCES_JSON = []
 RPATH_ST = '-Wl,-rpath,%s'
@@ -61,7 +61,7 @@ STLIB_MARKER = None
 STLIB_ST = '-l%s'
 SUPPORTED_PLATFORMS = ['flint', 'chalk', 'emery', 'basalt', 'diorite', 'aplite']
 TARGET_PLATFORMS = ['diorite', 'basalt', 'aplite']
-TIMESTAMP = 1767862419
+TIMESTAMP = 1768164791
 USE_GROUPS = True
 VERBOSE = 0
 WEBPACK = ['/home/christophe/.pebble-sdk/SDKs/current/node_modules/.bin/webpack']
