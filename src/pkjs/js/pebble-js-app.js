@@ -12,6 +12,7 @@ var KEY_NEWS_TITLE = 172;
 var KEY_REQUEST_NEWS = 173;
 var KEY_NEWS_FEED_URL = 175;
 var KEY_NEWS_CHANNEL_TITLE = 176;
+var KEY_READING_SPEED_WPM = 177;
 
 // State
 var g_items = [];
@@ -240,6 +241,22 @@ Pebble.addEventListener('webviewclosed', function (e) {
         g_current_index = 0;
         fetchRssFeed();
       }
+    }
+
+    // Gestion de la vitesse de lecture
+    var readingSpeed = configData.reading_speed_wpm;
+    if (readingSpeed !== undefined) {
+      console.log('Saving reading speed: ' + readingSpeed + ' WPM');
+      localStorage.setItem('reading_speed_wpm', readingSpeed);
+      
+      // Envoyer la vitesse à la Pebble
+      var speedDict = {};
+      speedDict[KEY_READING_SPEED_WPM] = parseInt(readingSpeed);
+      Pebble.sendAppMessage(speedDict, function () {
+        console.log('Reading speed sent: ' + readingSpeed + ' WPM');
+      }, function (err) {
+        console.log('Failed to send reading speed: ' + JSON.stringify(err));
+      });
     }
   } catch (err) {
     console.log('Error parsing configuration: ' + err.message);

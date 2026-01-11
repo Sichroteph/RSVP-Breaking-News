@@ -6,6 +6,7 @@
 // Message keys
 #define KEY_NEWS_TITLE 172
 #define KEY_REQUEST_NEWS 173
+#define KEY_READING_SPEED_WPM 177
 
 // Main window and layer
 static Window *s_main_window;
@@ -17,7 +18,7 @@ static char news_title[104] = "";
 // RSVP (Rapid Serial Visual Presentation)
 static char rsvp_word[32] = "";
 static uint8_t rsvp_word_index = 0;
-static uint16_t rsvp_wpm_ms = 220; // 200ms per word (~300 WPM)
+static uint16_t rsvp_wpm_ms = 220; // 220ms per word (~273 WPM)
 static AppTimer *rsvp_timer = NULL;
 static AppTimer *rsvp_start_timer = NULL;
 
@@ -319,6 +320,7 @@ static void news_timer_callback(void *context) {
 static void inbox_received_callback(DictionaryIterator *iterator,
                                     void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Received message from JS");
+  
   Tuple *news_title_tuple = dict_find(iterator, KEY_NEWS_TITLE);
   if (news_title_tuple) {
     snprintf(news_title, sizeof(news_title), "%s",
@@ -334,6 +336,18 @@ static void inbox_received_callback(DictionaryIterator *iterator,
     start_rsvp_for_title();
   } else {
     APP_LOG(APP_LOG_LEVEL_WARNING, "No title found in message");
+  }
+
+  // Gérer la vitesse de lecture
+  Tuple *speed_tuple = dict_find(iterator, KEY_READING_SPEED_WPM);
+  if (speed_tuple) {
+    uint16_t wpm = speed_tuple->value->uint16;
+    // Convertir WPM en millisecondes: ms = 60000 / WPM
+    rsvp_wpm_ms = 60000 / wpm;
+    APP_LOG(APP_LOG_LEVEL_INFO, "Reading speed set to %d WPM (%d ms)", wpm, rsvp_wpm_ms);
+    
+    // Sauvegarder dans persist storage
+    persist_write_int(KEY_READING_SPEED_WPM, wpm);
   }
 }
 
@@ -406,6 +420,15 @@ static void init(void) {
       (WindowHandlers){.load = main_window_load, .unload = main_window_unload});
 
   window_stack_push(s_main_window, true);
+
+  // Charger la vitesse de lecture sauvegardée
+  if (persist_exists(KEY_READING_SPEED_WPM)) {
+    uint16_t wpm = persist_read_int(KEY_READING_SPEED_WPM);
+    rsvp_wpm_ms = 60000 / wpm;
+    APP_LOG(APP_LOG_LEVEL_INFO, "Loaded reading speed: %d WPM (%d ms)", wpm, rsvp_wpm_ms);
+  } else {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Using default reading speed: 273 WPM");
+  }
 
   // Register AppMessage handlers
   app_message_register_inbox_received(inbox_received_callback);

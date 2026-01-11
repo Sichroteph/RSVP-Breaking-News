@@ -21,12 +21,43 @@
 <body>
   <h1 class='title'>RSVP News Settings</h1>
 
-  <div class='item-container' style='background-color: #2a5298; border-radius: 8px; margin: 10px; padding: 15px;'>
+  <div class='item-container' style='background-color: #1a73e8; border-radius: 8px; margin: 10px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+    <div style='color: #ffffff; text-align: center;'>
+      <strong style='font-size: 1.2em;'>⚡ RSVP Speed Reading</strong>
+      <p style='margin: 10px 0 0 0; font-size: 0.9em; line-height: 1.4;'>
+        RSVP (Rapid Serial Visual Presentation) affiche les mots un par un au même endroit, 
+        éliminant les mouvements oculaires et permettant une lecture ultra-rapide. 
+        La méthode Spritz peut augmenter votre vitesse de lecture jusqu'à 1000 mots/minute !
+      </p>
+    </div>
+  </div>
+
+  <div class='item-container' style='background-color: #2a5298; border-radius: 8px; margin: 10px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
     <div style='color: #ffffff; text-align: center;'>
       <strong style='font-size: 1.1em;'>📰 Custom RSS Feed</strong>
       <p style='margin: 10px 0 0 0; font-size: 0.95em;'>
         Enter a custom RSS feed URL or use one of the preset feeds below.
       </p>
+    </div>
+  </div>
+
+  <div class='item-container' style='border-radius: 8px; margin: 10px;'>
+    <div class='item-container-header' style='background-color: #34a853; color: white; border-radius: 8px 8px 0 0;'>⚡ Reading Speed</div>
+    <div class='item-container-content' style='padding: 15px;'>
+      <label class='item'>
+        <div class='item-input' style='text-align: center;'>
+          <input type='range' id='input_reading_speed' min='150' max='600' step='50' value='270' 
+                 style='width: 100%;' oninput='updateSpeedDisplay()'>
+        </div>
+      </label>
+      <div style='text-align: center; margin-top: 10px;'>
+        <span id='speed_display' style='font-size: 1.2em; font-weight: bold; color: #34a853;'>270 WPM</span>
+        <div style='font-size: 0.85em; color: #666; margin-top: 5px;'>
+          <span style='float: left;'>📚 Slow</span>
+          <span style='float: right;'>🚀 Fast</span>
+          <div style='clear: both;'></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -69,15 +100,24 @@
 
 <script>
 
+  function updateSpeedDisplay() {
+    var speedInput = document.getElementById('input_reading_speed');
+    var speedDisplay = document.getElementById('speed_display');
+    speedDisplay.textContent = speedInput.value + ' WPM';
+  }
+
   function getConfigData() {
     var input_news_feed_url = document.getElementById('input_news_feed_url');
+    var input_reading_speed = document.getElementById('input_reading_speed');
 
     var options = {
-      'input_news_feed_url': input_news_feed_url.value
+      'input_news_feed_url': input_news_feed_url.value,
+      'reading_speed_wpm': parseInt(input_reading_speed.value)
     };
 
     // Save for next launch
     localStorage['input_news_feed_url'] = options['input_news_feed_url'];
+    localStorage['reading_speed_wpm'] = options['reading_speed_wpm'];
 
     console.log('Got options: ' + JSON.stringify(options));
     return options;
@@ -106,8 +146,11 @@
 
   (function () {
     var input_news_feed_url = document.getElementById('input_news_feed_url');
+    var input_reading_speed = document.getElementById('input_reading_speed');
 
     input_news_feed_url.value = localStorage['input_news_feed_url'] || 'https://rss.app/feeds/SdI37Q5uDrVQuAOr.xml';
+    input_reading_speed.value = localStorage['reading_speed_wpm'] || '270';
+    updateSpeedDisplay();
   })();
 </script>
 
