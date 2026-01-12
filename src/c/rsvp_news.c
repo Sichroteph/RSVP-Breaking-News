@@ -560,6 +560,9 @@ static void start_rsvp_for_title(void) {
       rsvp_start_timer = NULL;
     }
 
+    // Enable backlight for reading
+    light_enable_interaction();
+
     // On first news after splash, start immediately without help screen
     // On subsequent news (after navigation), also start immediately
     s_show_focal_lines_only = false;
@@ -641,6 +644,9 @@ static void start_article_reading(void) {
   s_reading_article = true;
   rsvp_word_index = 0;
 
+  // Enable backlight for reading
+  light_enable_interaction();
+
   if (extract_next_word()) {
     s_show_focal_lines_only = false;
     layer_mark_dirty(s_canvas_layer);
@@ -658,6 +664,9 @@ static void rsvp_timer_callback(void *context) {
   if (s_paused || s_end_screen) {
     return;
   }
+
+  // Keep backlight on during reading
+  light_enable_interaction();
 
   rsvp_word_index++;
   if (extract_next_word()) {
