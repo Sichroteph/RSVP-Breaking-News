@@ -1,12 +1,12 @@
 #include <pebble.h>
 
 // Spritz constants for optimal word display (relative to screen dimensions)
-#define SPRITZ_HEADER_Y 5          // Y position for HEADLINE/ARTICLE header
-#define SPRITZ_WORD_Y 55 // Y position of word center (moved up for header)
+#define SPRITZ_HEADER_Y 5 // Y position for HEADLINE/ARTICLE header
+#define SPRITZ_WORD_Y 55  // Y position of word center (moved up for header)
 #define SPRITZ_LINE_TOP_Y (SPRITZ_WORD_Y - 22)    // Y of line above word
 #define SPRITZ_LINE_BOTTOM_Y (SPRITZ_WORD_Y + 30) // Y of line below word
-#define SPRITZ_LINE_LENGTH 20       // Length of vertical guide lines
-#define SPRITZ_CIRCLE_RADIUS 5      // Radius of pivot indicator circle
+#define SPRITZ_LINE_LENGTH 20  // Length of vertical guide lines
+#define SPRITZ_CIRCLE_RADIUS 5 // Radius of pivot indicator circle
 
 // Message keys
 #define KEY_NEWS_TITLE 172
@@ -71,6 +71,7 @@ static uint8_t news_display_count = 0;
 static uint8_t news_max_count = 50;
 static AppTimer *news_timer = NULL;
 static AppTimer *end_timer = NULL;
+static bool s_user_navigating = false; // True when user manually navigates
 
 // News retry protection
 static uint8_t news_retry_count = 0;
@@ -227,6 +228,7 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index,
   news_title[0] = '\0';
   rsvp_word[0] = '\0';
   s_first_news_after_splash = true;
+  s_user_navigating = false;
 
   layer_mark_dirty(s_canvas_layer);
 }
@@ -262,7 +264,7 @@ static void draw_rsvp_word(GContext *ctx, GRect bounds) {
   int height = bounds.size.h;
   int pivot_x = width / 2;
   int help_y = height - 60;
-  
+
   // Background
   graphics_context_set_fill_color(ctx, GColorBlack);
   graphics_fill_rect(ctx, GRect(0, 0, width, height), 0, GCornerNone);
@@ -279,13 +281,12 @@ static void draw_rsvp_word(GContext *ctx, GRect bounds) {
 
   // Draw the horizontal guide lines above and below the word (always visible)
   int line_half_width = 60; // Half width of the horizontal line
-  graphics_draw_line(
-      ctx, GPoint(pivot_x - line_half_width, SPRITZ_LINE_TOP_Y),
-      GPoint(pivot_x + line_half_width, SPRITZ_LINE_TOP_Y));
+  graphics_draw_line(ctx, GPoint(pivot_x - line_half_width, SPRITZ_LINE_TOP_Y),
+                     GPoint(pivot_x + line_half_width, SPRITZ_LINE_TOP_Y));
 
-  graphics_draw_line(
-      ctx, GPoint(pivot_x - line_half_width, SPRITZ_LINE_BOTTOM_Y),
-      GPoint(pivot_x + line_half_width, SPRITZ_LINE_BOTTOM_Y));
+  graphics_draw_line(ctx,
+                     GPoint(pivot_x - line_half_width, SPRITZ_LINE_BOTTOM_Y),
+                     GPoint(pivot_x + line_half_width, SPRITZ_LINE_BOTTOM_Y));
 
   // Draw a small circle on the top line at the pivot position (pivot indicator)
   graphics_context_set_stroke_color(ctx, GColorWhite);
@@ -316,14 +317,12 @@ static void draw_rsvp_word(GContext *ctx, GRect bounds) {
     graphics_draw_text(
         ctx, help_line1, font_help, GRect(5, help_y, width - 10, 18),
         GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-    graphics_draw_text(ctx, help_line2, font_help,
-                       GRect(5, help_y + 15, width - 10, 18),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
-                       NULL);
-    graphics_draw_text(ctx, help_line3, font_help,
-                       GRect(5, help_y + 30, width - 10, 18),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
-                       NULL);
+    graphics_draw_text(
+        ctx, help_line2, font_help, GRect(5, help_y + 15, width - 10, 18),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    graphics_draw_text(
+        ctx, help_line3, font_help, GRect(5, help_y + 30, width - 10, 18),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
     return;
   }
 
@@ -334,7 +333,7 @@ static void draw_rsvp_word(GContext *ctx, GRect bounds) {
 
   // Get the pivot index based on Spritz algorithm
   int pivot_idx = get_pivot_index(word_length);
-  
+
   // Safety check: ensure pivot_idx is within bounds
   if (pivot_idx >= word_length) {
     pivot_idx = word_length - 1;
@@ -355,8 +354,7 @@ static void draw_rsvp_word(GContext *ctx, GRect bounds) {
   // Calculate X position so pivot letter is centered at pivot_x
   // The pivot letter's center should be at pivot_x
   // Shift 3 pixels to the left
-  int word_x =
-      pivot_x - pre_pivot_width - (pivot_char_width / 2) + 2 - 3;
+  int word_x = pivot_x - pre_pivot_width - (pivot_char_width / 2) + 2 - 3;
 
   // Y position for text
   int text_y = SPRITZ_WORD_Y - 16; // Adjust for font baseline
@@ -456,7 +454,7 @@ static void draw_rsvp_word(GContext *ctx, GRect bounds) {
 static void draw_end_screen(GContext *ctx, GRect bounds) {
   int width = bounds.size.w;
   int height = bounds.size.h;
-  
+
   graphics_context_set_fill_color(ctx, GColorBlack);
   graphics_fill_rect(ctx, GRect(0, 0, width, height), 0, GCornerNone);
   graphics_context_set_text_color(ctx, GColorWhite);
@@ -471,7 +469,7 @@ static void draw_end_screen(GContext *ctx, GRect bounds) {
 static void draw_waiting_screen(GContext *ctx, GRect bounds) {
   int width = bounds.size.w;
   int height = bounds.size.h;
-  
+
   graphics_context_set_fill_color(ctx, GColorBlack);
   graphics_fill_rect(ctx, GRect(0, 0, width, height), 0, GCornerNone);
   graphics_context_set_text_color(ctx, GColorWhite);
@@ -494,7 +492,7 @@ static void draw_waiting_screen(GContext *ctx, GRect bounds) {
 static void draw_loading_screen(GContext *ctx, GRect bounds) {
   int width = bounds.size.w;
   int height = bounds.size.h;
-  
+
   graphics_context_set_fill_color(ctx, GColorBlack);
   graphics_fill_rect(ctx, GRect(0, 0, width, height), 0, GCornerNone);
   graphics_context_set_text_color(ctx, GColorWhite);
@@ -518,7 +516,7 @@ static void draw_loading_screen(GContext *ctx, GRect bounds) {
 // Main update proc
 static void update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
-  
+
   if (s_waiting_for_config) {
     draw_waiting_screen(ctx, bounds);
   } else if (s_showing_menu) {
@@ -577,6 +575,7 @@ static void reset_app_state(void) {
   s_reading_article = false;
   s_article_news_index = -1;
   s_showing_page_number = false;
+  s_user_navigating = false;
   news_article[0] = '\0';
 
   // Show the journal menu
@@ -615,13 +614,13 @@ static void request_article_from_js(uint8_t index) {
 static bool extract_next_word(void) {
   // Use article if reading article, otherwise use title
   const char *p = s_reading_article ? news_article : news_title;
-  
+
   // Safety check: ensure we have valid text
   if (!p || p[0] == '\0') {
     rsvp_word[0] = '\0';
     return false;
   }
-  
+
   uint16_t word_count = 0;
   uint16_t word_start = 0;
   uint16_t word_len = 0;
@@ -911,7 +910,8 @@ static void inbox_received_callback(DictionaryIterator *iterator,
 
   // Handle feed name
   Tuple *feed_name_tuple = dict_find(iterator, KEY_FEED_NAME);
-  if (feed_name_tuple && feed_name_tuple->value && feed_name_tuple->value->cstring) {
+  if (feed_name_tuple && feed_name_tuple->value &&
+      feed_name_tuple->value->cstring) {
     // Find first empty slot
     for (int i = 0; i < feed_count && i < 20; i++) {
       if (feed_names[i][0] == '\0') {
@@ -943,7 +943,8 @@ static void inbox_received_callback(DictionaryIterator *iterator,
   }
 
   Tuple *news_title_tuple = dict_find(iterator, KEY_NEWS_TITLE);
-  if (news_title_tuple && news_title_tuple->value && news_title_tuple->value->cstring) {
+  if (news_title_tuple && news_title_tuple->value &&
+      news_title_tuple->value->cstring) {
     snprintf(news_title, sizeof(news_title), "%s",
              news_title_tuple->value->cstring);
     APP_LOG(APP_LOG_LEVEL_INFO, "Received title: %s", news_title);
@@ -968,8 +969,8 @@ static void inbox_received_callback(DictionaryIterator *iterator,
         start_rsvp_for_title();
       }
 
-      // Request more news if we haven't reached the limit
-      if (news_titles_count < news_max_count) {
+      // Request more news if we haven't reached the limit and user is not navigating
+      if (news_titles_count < news_max_count && !s_user_navigating) {
         news_timer = app_timer_register(100, news_timer_callback, NULL);
       }
     }
@@ -1179,6 +1180,13 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
     return;
   }
 
+  // Stop automatic news fetching when user starts navigating
+  s_user_navigating = true;
+  if (news_timer) {
+    app_timer_cancel(news_timer);
+    news_timer = NULL;
+  }
+
   int8_t new_index;
   if (current_news_index <= 0) {
     // Wrap to end
@@ -1200,6 +1208,13 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
   // Next news
   if (news_titles_count == 0) {
     return;
+  }
+
+  // Stop automatic news fetching when user starts navigating
+  s_user_navigating = true;
+  if (news_timer) {
+    app_timer_cancel(news_timer);
+    news_timer = NULL;
   }
 
   int8_t new_index;
@@ -1273,6 +1288,7 @@ static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
   s_paused = false;
   s_first_news_after_splash = true;
   s_showing_page_number = false;
+  s_user_navigating = false;
 
   // Show the journal menu
   show_journal_menu();
