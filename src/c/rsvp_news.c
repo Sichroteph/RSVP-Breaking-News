@@ -244,6 +244,9 @@ static void show_journal_menu(void) {
 
   // Set menu click config
   menu_layer_set_click_config_onto_window(s_menu_layer, s_main_window);
+  
+  // Override back button to exit app when menu is showing
+  window_set_click_config_provider(s_main_window, click_config_provider);
 }
 
 static void hide_journal_menu(void) {
