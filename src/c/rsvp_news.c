@@ -747,7 +747,8 @@ static void show_splash_then_next_title(void) {
   // Stay on the same title (don't increment)
   current_news_index = s_article_news_index;
   s_article_news_index = -1;
-  snprintf(news_title, sizeof(news_title), "%s", news_titles[current_news_index]);
+  snprintf(news_title, sizeof(news_title), "%s",
+           news_titles[current_news_index]);
 
   // Don't start reading - just show the page number after a pause
   rsvp_word[0] = '\0';
