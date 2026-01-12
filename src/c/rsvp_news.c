@@ -839,7 +839,14 @@ static void rsvp_timer_callback(void *context) {
       // End of article - show splash then go to next title
       show_splash_then_next_title();
     } else {
-      // End of title - show page number after 500ms pause
+      // End of title - stop automatic news fetching and show page number
+      s_user_navigating = true;
+      if (news_timer) {
+        app_timer_cancel(news_timer);
+        news_timer = NULL;
+      }
+      
+      // Show page number after 500ms pause
       if (page_number_timer) {
         app_timer_cancel(page_number_timer);
       }
@@ -854,6 +861,11 @@ static void news_timer_callback(void *context) {
   news_timer = NULL;
 
   if (s_paused) {
+    return;
+  }
+
+  // Stop if user is manually navigating
+  if (s_user_navigating) {
     return;
   }
 
