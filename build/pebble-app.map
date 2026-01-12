@@ -1152,7 +1152,7 @@ LOAD /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib
  .note.gnu.build-id
                 0x0000000000000084       0x24 linker stubs
 
-.text           0x00000000000000a8     0x2308
+.text           0x00000000000000a8     0x229c
  *(.text)
  .text          0x00000000000000a8       0x14 /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
  *(.text.*)
@@ -1184,309 +1184,307 @@ LOAD /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib
  .text.menu_draw_row_callback
                 0x000000000000057c       0x34 src/c/rsvp_news.c.25.o
  .text.update_proc
-                0x00000000000005b0      0x768 src/c/rsvp_news.c.25.o
+                0x00000000000005b0      0x70c src/c/rsvp_news.c.25.o
  .text.calculate_spritz_delay.constprop.12
-                0x0000000000000d18       0x98 src/c/rsvp_news.c.25.o
+                0x0000000000000cbc       0x98 src/c/rsvp_news.c.25.o
  .text.start_rsvp_for_title
-                0x0000000000000db0      0x108 src/c/rsvp_news.c.25.o
+                0x0000000000000d54      0x100 src/c/rsvp_news.c.25.o
  .text.show_splash_then_next_title
-                0x0000000000000eb8       0xb8 src/c/rsvp_news.c.25.o
+                0x0000000000000e54       0xb8 src/c/rsvp_news.c.25.o
  .text.rsvp_timer_callback
-                0x0000000000000f70       0xb8 src/c/rsvp_news.c.25.o
+                0x0000000000000f0c       0xac src/c/rsvp_news.c.25.o
  .text.select_click_handler
-                0x0000000000001028      0x11c src/c/rsvp_news.c.25.o
+                0x0000000000000fb8      0x110 src/c/rsvp_news.c.25.o
  .text.display_news_at_index
-                0x0000000000001144       0xf0 src/c/rsvp_news.c.25.o
+                0x00000000000010c8       0xf0 src/c/rsvp_news.c.25.o
  .text.down_click_handler
-                0x0000000000001234       0x38 src/c/rsvp_news.c.25.o
+                0x00000000000011b8       0x38 src/c/rsvp_news.c.25.o
  .text.up_click_handler
-                0x000000000000126c       0x3c src/c/rsvp_news.c.25.o
+                0x00000000000011f0       0x3c src/c/rsvp_news.c.25.o
  .text.back_click_handler
-                0x00000000000012a8      0x124 src/c/rsvp_news.c.25.o
+                0x000000000000122c      0x118 src/c/rsvp_news.c.25.o
  .text.inbox_received_callback
-                0x00000000000013cc      0x62c src/c/rsvp_news.c.25.o
+                0x0000000000001344      0x618 src/c/rsvp_news.c.25.o
  .text.rsvp_start_timer_callback
-                0x00000000000019f8       0x54 src/c/rsvp_news.c.25.o
+                0x000000000000195c       0x4c src/c/rsvp_news.c.25.o
  .text.startup.main
-                0x0000000000001a4c      0x1c0 src/c/rsvp_news.c.25.o
-                0x0000000000001a4c                main
+                0x00000000000019a8      0x1c0 src/c/rsvp_news.c.25.o
+                0x00000000000019a8                main
  .text.app_event_loop
-                0x0000000000001c0c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c0c                app_event_loop
- .text.app_log  0x0000000000001c18        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c18                app_log
+                0x0000000000001b68        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001b68                app_event_loop
+ .text.app_log  0x0000000000001b74        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001b74                app_log
  .text.app_message_deregister_callbacks
-                0x0000000000001c24        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c24                app_message_deregister_callbacks
+                0x0000000000001b80        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001b80                app_message_deregister_callbacks
  .text.app_message_open
-                0x0000000000001c30        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c30                app_message_open
+                0x0000000000001b8c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001b8c                app_message_open
  .text.app_timer_cancel
-                0x0000000000001c3c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c3c                app_timer_cancel
+                0x0000000000001b98        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001b98                app_timer_cancel
  .text.app_timer_register
-                0x0000000000001c48        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c48                app_timer_register
+                0x0000000000001ba4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001ba4                app_timer_register
  .text.dict_find
-                0x0000000000001c54        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c54                dict_find
+                0x0000000000001bb0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001bb0                dict_find
  .text.dict_write_uint8
-                0x0000000000001c60        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c60                dict_write_uint8
+                0x0000000000001bbc        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001bbc                dict_write_uint8
  .text.fonts_get_system_font
-                0x0000000000001c6c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c6c                fonts_get_system_font
+                0x0000000000001bc8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001bc8                fonts_get_system_font
  .text.graphics_draw_circle
-                0x0000000000001c78        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c78                graphics_draw_circle
+                0x0000000000001bd4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001bd4                graphics_draw_circle
  .text.graphics_draw_line
-                0x0000000000001c84        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c84                graphics_draw_line
+                0x0000000000001be0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001be0                graphics_draw_line
  .text.graphics_fill_rect
-                0x0000000000001c90        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c90                graphics_fill_rect
+                0x0000000000001bec        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001bec                graphics_fill_rect
  .text.layer_add_child
-                0x0000000000001c9c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001c9c                layer_add_child
+                0x0000000000001bf8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001bf8                layer_add_child
  .text.layer_create
-                0x0000000000001ca8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001ca8                layer_create
+                0x0000000000001c04        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c04                layer_create
  .text.layer_destroy
-                0x0000000000001cb4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001cb4                layer_destroy
+                0x0000000000001c10        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c10                layer_destroy
  .text.layer_get_bounds
-                0x0000000000001cc0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001cc0                layer_get_bounds
+                0x0000000000001c1c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c1c                layer_get_bounds
  .text.layer_mark_dirty
-                0x0000000000001ccc        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001ccc                layer_mark_dirty
+                0x0000000000001c28        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c28                layer_mark_dirty
  .text.layer_set_hidden
-                0x0000000000001cd8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001cd8                layer_set_hidden
+                0x0000000000001c34        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c34                layer_set_hidden
  .text.layer_set_update_proc
-                0x0000000000001ce4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001ce4                layer_set_update_proc
+                0x0000000000001c40        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c40                layer_set_update_proc
  .text.light_enable_interaction
-                0x0000000000001cf0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001cf0                light_enable_interaction
- .text.memcpy   0x0000000000001cfc        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001cfc                memcpy
- .text.memset   0x0000000000001d08        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d08                memset
+                0x0000000000001c4c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c4c                light_enable_interaction
+ .text.memcpy   0x0000000000001c58        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c58                memcpy
+ .text.memset   0x0000000000001c64        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c64                memset
  .text.menu_cell_basic_draw
-                0x0000000000001d14        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d14                menu_cell_basic_draw
+                0x0000000000001c70        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c70                menu_cell_basic_draw
  .text.menu_layer_destroy
-                0x0000000000001d20        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d20                menu_layer_destroy
+                0x0000000000001c7c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c7c                menu_layer_destroy
  .text.menu_layer_get_layer
-                0x0000000000001d2c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d2c                menu_layer_get_layer
+                0x0000000000001c88        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c88                menu_layer_get_layer
  .text.menu_layer_reload_data
-                0x0000000000001d38        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d38                menu_layer_reload_data
+                0x0000000000001c94        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001c94                menu_layer_reload_data
  .text.menu_layer_set_click_config_onto_window
-                0x0000000000001d44        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d44                menu_layer_set_click_config_onto_window
+                0x0000000000001ca0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001ca0                menu_layer_set_click_config_onto_window
  .text.persist_exists
-                0x0000000000001d50        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d50                persist_exists
+                0x0000000000001cac        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001cac                persist_exists
  .text.persist_read_bool
-                0x0000000000001d5c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d5c                persist_read_bool
+                0x0000000000001cb8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001cb8                persist_read_bool
  .text.persist_read_int
-                0x0000000000001d68        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d68                persist_read_int
+                0x0000000000001cc4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001cc4                persist_read_int
  .text.persist_write_bool
-                0x0000000000001d74        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d74                persist_write_bool
+                0x0000000000001cd0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001cd0                persist_write_bool
  .text.persist_write_int
-                0x0000000000001d80        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d80                persist_write_int
+                0x0000000000001cdc        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001cdc                persist_write_int
  .text.snprintf
-                0x0000000000001d8c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d8c                snprintf
- .text.strlen   0x0000000000001d98        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001d98                strlen
+                0x0000000000001ce8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001ce8                snprintf
+ .text.strlen   0x0000000000001cf4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001cf4                strlen
  .text.vibes_enqueue_custom_pattern
-                0x0000000000001da4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001da4                vibes_enqueue_custom_pattern
+                0x0000000000001d00        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d00                vibes_enqueue_custom_pattern
  .text.window_create
-                0x0000000000001db0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001db0                window_create
+                0x0000000000001d0c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d0c                window_create
  .text.window_destroy
-                0x0000000000001dbc        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001dbc                window_destroy
+                0x0000000000001d18        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d18                window_destroy
  .text.window_get_root_layer
-                0x0000000000001dc8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001dc8                window_get_root_layer
+                0x0000000000001d24        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d24                window_get_root_layer
  .text.window_set_click_config_provider
-                0x0000000000001dd4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001dd4                window_set_click_config_provider
+                0x0000000000001d30        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d30                window_set_click_config_provider
  .text.window_set_window_handlers
-                0x0000000000001de0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001de0                window_set_window_handlers
+                0x0000000000001d3c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d3c                window_set_window_handlers
  .text.window_stack_pop
-                0x0000000000001dec        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001dec                window_stack_pop
+                0x0000000000001d48        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d48                window_stack_pop
  .text.window_stack_push
-                0x0000000000001df8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001df8                window_stack_push
+                0x0000000000001d54        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d54                window_stack_push
  .text.app_message_outbox_begin
-                0x0000000000001e04        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e04                app_message_outbox_begin
+                0x0000000000001d60        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d60                app_message_outbox_begin
  .text.app_message_outbox_send
-                0x0000000000001e10        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e10                app_message_outbox_send
+                0x0000000000001d6c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d6c                app_message_outbox_send
  .text.app_message_register_inbox_dropped
-                0x0000000000001e1c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e1c                app_message_register_inbox_dropped
+                0x0000000000001d78        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d78                app_message_register_inbox_dropped
  .text.app_message_register_inbox_received
-                0x0000000000001e28        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e28                app_message_register_inbox_received
+                0x0000000000001d84        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d84                app_message_register_inbox_received
  .text.app_message_register_outbox_failed
-                0x0000000000001e34        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e34                app_message_register_outbox_failed
+                0x0000000000001d90        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d90                app_message_register_outbox_failed
  .text.app_message_register_outbox_sent
-                0x0000000000001e40        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e40                app_message_register_outbox_sent
+                0x0000000000001d9c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001d9c                app_message_register_outbox_sent
  .text.window_single_click_subscribe
-                0x0000000000001e4c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e4c                window_single_click_subscribe
+                0x0000000000001da8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001da8                window_single_click_subscribe
  .text.graphics_draw_text
-                0x0000000000001e58        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e58                graphics_draw_text
+                0x0000000000001db4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001db4                graphics_draw_text
  .text.graphics_text_layout_get_content_size
-                0x0000000000001e64        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e64                graphics_text_layout_get_content_size
+                0x0000000000001dc0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001dc0                graphics_text_layout_get_content_size
  .text.graphics_context_set_fill_color
-                0x0000000000001e70        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e70                graphics_context_set_fill_color
+                0x0000000000001dcc        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001dcc                graphics_context_set_fill_color
  .text.graphics_context_set_stroke_color
-                0x0000000000001e7c        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e7c                graphics_context_set_stroke_color
+                0x0000000000001dd8        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001dd8                graphics_context_set_stroke_color
  .text.graphics_context_set_text_color
-                0x0000000000001e88        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e88                graphics_context_set_text_color
+                0x0000000000001de4        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001de4                graphics_context_set_text_color
  .text.menu_layer_create
-                0x0000000000001e94        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001e94                menu_layer_create
+                0x0000000000001df0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001df0                menu_layer_create
  .text.menu_layer_set_callbacks
-                0x0000000000001ea0        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
-                0x0000000000001ea0                menu_layer_set_callbacks
+                0x0000000000001dfc        0xc /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+                0x0000000000001dfc                menu_layer_set_callbacks
  *(.rodata)
- .rodata        0x0000000000001eac       0x6c src/c/rsvp_news.c.25.o
+ .rodata        0x0000000000001e08       0x5c src/c/rsvp_news.c.25.o
  *(.rodata*)
- .rodata.CSWTCH.145
-                0x0000000000001f18        0xd src/c/rsvp_news.c.25.o
+ .rodata.CSWTCH.144
+                0x0000000000001e64        0xd src/c/rsvp_news.c.25.o
  .rodata.str1.1
-                0x0000000000001f25      0x47e src/c/rsvp_news.c.25.o
-                                        0x481 (size before relaxing)
- *fill*         0x00000000000023a3        0x1 
- .rodata.segments.7743
-                0x00000000000023a4        0xc src/c/rsvp_news.c.25.o
+                0x0000000000001e71      0x4c4 src/c/rsvp_news.c.25.o
+                                        0x4c7 (size before relaxing)
+ *fill*         0x0000000000002335        0x3 
+ .rodata.segments.7741
+                0x0000000000002338        0xc src/c/rsvp_news.c.25.o
 
-.glue_7         0x00000000000023b0        0x0
+.glue_7         0x0000000000002344        0x0
  .glue_7        0x0000000000000000        0x0 linker stubs
 
-.glue_7t        0x00000000000023b0        0x0
+.glue_7t        0x0000000000002344        0x0
  .glue_7t       0x0000000000000000        0x0 linker stubs
 
-.vfp11_veneer   0x00000000000023b0        0x0
+.vfp11_veneer   0x0000000000002344        0x0
  .vfp11_veneer  0x0000000000000000        0x0 linker stubs
 
-.v4_bx          0x00000000000023b0        0x0
+.v4_bx          0x0000000000002344        0x0
  .v4_bx         0x0000000000000000        0x0 linker stubs
 
-.iplt           0x00000000000023b0        0x0
+.iplt           0x0000000000002344        0x0
  .iplt          0x0000000000000000        0x0 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtbegin.o
 
-.rel.dyn        0x00000000000023b0        0x0
+.rel.dyn        0x0000000000002344        0x0
  .rel.iplt      0x0000000000000000        0x0 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtbegin.o
 
-.data           0x00000000000023b0       0x14
+.data           0x0000000000002344       0x14
  *(.data)
- .data          0x00000000000023b0        0x0 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crti.o
- .data          0x00000000000023b0        0x4 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtbegin.o
-                0x00000000000023b0                __dso_handle
- .data          0x00000000000023b4        0x8 src/c/rsvp_news.c.25.o
- .data          0x00000000000023bc        0x0 aplite/appinfo.auto.c.25.o
- .data          0x00000000000023bc        0x0 aplite/src/resource_ids.auto.c.25.o
- .data          0x00000000000023bc        0x0 src/message_keys.auto.c.25.o
- .data          0x00000000000023bc        0x0 /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
- .data          0x00000000000023bc        0x0 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtend.o
- .data          0x00000000000023bc        0x0 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtn.o
+ .data          0x0000000000002344        0x0 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crti.o
+ .data          0x0000000000002344        0x4 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtbegin.o
+                0x0000000000002344                __dso_handle
+ .data          0x0000000000002348        0x8 src/c/rsvp_news.c.25.o
+ .data          0x0000000000002350        0x0 aplite/appinfo.auto.c.25.o
+ .data          0x0000000000002350        0x0 aplite/src/resource_ids.auto.c.25.o
+ .data          0x0000000000002350        0x0 src/message_keys.auto.c.25.o
+ .data          0x0000000000002350        0x0 /home/christophe/.pebble-sdk/SDKs/current/sdk-core/pebble/aplite/lib/libpebble.a(tmp7jpKUopebble.o)
+ .data          0x0000000000002350        0x0 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtend.o
+ .data          0x0000000000002350        0x0 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtn.o
  *(.data.*)
  .data.s_first_news_after_splash
-                0x00000000000023bc        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000002350        0x1 src/c/rsvp_news.c.25.o
  .data.selected_feed_index
-                0x00000000000023bd        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000002351        0x1 src/c/rsvp_news.c.25.o
  .data.current_news_index
-                0x00000000000023be        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000002352        0x1 src/c/rsvp_news.c.25.o
  .data.s_article_news_index
-                0x00000000000023bf        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000002353        0x1 src/c/rsvp_news.c.25.o
  .data.rsvp_wpm_ms
-                0x00000000000023c0        0x2 src/c/rsvp_news.c.25.o
+                0x0000000000002354        0x2 src/c/rsvp_news.c.25.o
  .data.s_backlight_enabled
-                0x00000000000023c2        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000002356        0x1 src/c/rsvp_news.c.25.o
  .data.s_showing_menu
-                0x00000000000023c3        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000002357        0x1 src/c/rsvp_news.c.25.o
 
-.igot.plt       0x00000000000023c4        0x0
+.igot.plt       0x0000000000002358        0x0
  .igot.plt      0x0000000000000000        0x0 /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtbegin.o
 
-.bss            0x00000000000023c4     0x1987
+.bss            0x0000000000002358     0x1987
  *(.bss)
  *(.bss.*)
  .bss.news_titles
-                0x00000000000023c4     0x1450 src/c/rsvp_news.c.25.o
+                0x0000000000002358     0x1450 src/c/rsvp_news.c.25.o
  .bss.end_timer
-                0x0000000000003814        0x4 src/c/rsvp_news.c.25.o
- .bss.news_titles_count
-                0x0000000000003818        0x1 src/c/rsvp_news.c.25.o
- .bss.s_reading_article
-                0x0000000000003819        0x1 src/c/rsvp_news.c.25.o
- .bss.news_title
-                0x000000000000381a       0x68 src/c/rsvp_news.c.25.o
- .bss.s_paused  0x0000000000003882        0x1 src/c/rsvp_news.c.25.o
- *fill*         0x0000000000003883        0x1 
- .bss.s_menu_layer
-                0x0000000000003884        0x4 src/c/rsvp_news.c.25.o
- .bss.rsvp_word
-                0x0000000000003888       0x20 src/c/rsvp_news.c.25.o
- .bss.s_main_window
-                0x00000000000038a8        0x4 src/c/rsvp_news.c.25.o
- .bss.rsvp_word_index
-                0x00000000000038ac        0x1 src/c/rsvp_news.c.25.o
+                0x00000000000037a8        0x4 src/c/rsvp_news.c.25.o
  .bss.feed_names
-                0x00000000000038ad      0x280 src/c/rsvp_news.c.25.o
- *fill*         0x0000000000003b2d        0x3 
- .bss.s_canvas_layer
-                0x0000000000003b30        0x4 src/c/rsvp_news.c.25.o
- .bss.s_end_screen
-                0x0000000000003b34        0x1 src/c/rsvp_news.c.25.o
- *fill*         0x0000000000003b35        0x3 
- .bss.news_timer
-                0x0000000000003b38        0x4 src/c/rsvp_news.c.25.o
+                0x00000000000037ac      0x280 src/c/rsvp_news.c.25.o
+ .bss.news_titles_count
+                0x0000000000003a2c        0x1 src/c/rsvp_news.c.25.o
+ .bss.s_reading_article
+                0x0000000000003a2d        0x1 src/c/rsvp_news.c.25.o
+ .bss.news_title
+                0x0000000000003a2e       0x68 src/c/rsvp_news.c.25.o
+ .bss.s_paused  0x0000000000003a96        0x1 src/c/rsvp_news.c.25.o
+ *fill*         0x0000000000003a97        0x1 
+ .bss.s_menu_layer
+                0x0000000000003a98        0x4 src/c/rsvp_news.c.25.o
+ .bss.rsvp_word
+                0x0000000000003a9c       0x20 src/c/rsvp_news.c.25.o
+ .bss.s_main_window
+                0x0000000000003abc        0x4 src/c/rsvp_news.c.25.o
+ .bss.rsvp_word_index
+                0x0000000000003ac0        0x1 src/c/rsvp_news.c.25.o
+ *fill*         0x0000000000003ac1        0x3 
  .bss.rsvp_timer
-                0x0000000000003b3c        0x4 src/c/rsvp_news.c.25.o
+                0x0000000000003ac4        0x4 src/c/rsvp_news.c.25.o
+ .bss.s_canvas_layer
+                0x0000000000003ac8        0x4 src/c/rsvp_news.c.25.o
+ .bss.s_end_screen
+                0x0000000000003acc        0x1 src/c/rsvp_news.c.25.o
+ *fill*         0x0000000000003acd        0x3 
+ .bss.news_timer
+                0x0000000000003ad0        0x4 src/c/rsvp_news.c.25.o
  .bss.news_retry_count
-                0x0000000000003b40        0x1 src/c/rsvp_news.c.25.o
- .bss.s_show_focal_lines_only
-                0x0000000000003b41        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000003ad4        0x1 src/c/rsvp_news.c.25.o
  .bss.news_article
-                0x0000000000003b42      0x200 src/c/rsvp_news.c.25.o
+                0x0000000000003ad5      0x200 src/c/rsvp_news.c.25.o
  .bss.news_display_count
-                0x0000000000003d42        0x1 src/c/rsvp_news.c.25.o
- *fill*         0x0000000000003d43        0x1 
+                0x0000000000003cd5        0x1 src/c/rsvp_news.c.25.o
+ *fill*         0x0000000000003cd6        0x2 
  .bss.rsvp_start_timer
-                0x0000000000003d44        0x4 src/c/rsvp_news.c.25.o
+                0x0000000000003cd8        0x4 src/c/rsvp_news.c.25.o
  .bss.s_waiting_for_config
-                0x0000000000003d48        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000003cdc        0x1 src/c/rsvp_news.c.25.o
  .bss.s_splash_active
-                0x0000000000003d49        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000003cdd        0x1 src/c/rsvp_news.c.25.o
  .bss.feed_count
-                0x0000000000003d4a        0x1 src/c/rsvp_news.c.25.o
+                0x0000000000003cde        0x1 src/c/rsvp_news.c.25.o
 
 DISCARD
  libc.a(*)
@@ -1525,11 +1523,11 @@ OUTPUT(/home/christophe/pebble-projects/RSVP-Breaking-News/build/aplite/pebble-a
  .comment       0x0000000000000000       0x4f src/message_keys.auto.c.25.o
  .comment       0x0000000000000000       0x4f /home/christophe/.pebble-sdk/SDKs/4.9.77/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/4.7.2/thumb2/crtend.o
 
-.debug_info     0x0000000000000000     0x3c0e
- .debug_info    0x0000000000000000     0x37a3 src/c/rsvp_news.c.25.o
- .debug_info    0x00000000000037a3      0x31a aplite/appinfo.auto.c.25.o
- .debug_info    0x0000000000003abd       0x64 aplite/src/resource_ids.auto.c.25.o
- .debug_info    0x0000000000003b21       0xed src/message_keys.auto.c.25.o
+.debug_info     0x0000000000000000     0x3bd0
+ .debug_info    0x0000000000000000     0x3765 src/c/rsvp_news.c.25.o
+ .debug_info    0x0000000000003765      0x31a aplite/appinfo.auto.c.25.o
+ .debug_info    0x0000000000003a7f       0x64 aplite/src/resource_ids.auto.c.25.o
+ .debug_info    0x0000000000003ae3       0xed src/message_keys.auto.c.25.o
 
 .debug_abbrev   0x0000000000000000      0x5fb
  .debug_abbrev  0x0000000000000000      0x4f3 src/c/rsvp_news.c.25.o
@@ -1537,8 +1535,8 @@ OUTPUT(/home/christophe/pebble-projects/RSVP-Breaking-News/build/aplite/pebble-a
  .debug_abbrev  0x0000000000000591       0x26 aplite/src/resource_ids.auto.c.25.o
  .debug_abbrev  0x00000000000005b7       0x44 src/message_keys.auto.c.25.o
 
-.debug_loc      0x0000000000000000     0x13e9
- .debug_loc     0x0000000000000000     0x13e9 src/c/rsvp_news.c.25.o
+.debug_loc      0x0000000000000000     0x13fc
+ .debug_loc     0x0000000000000000     0x13fc src/c/rsvp_news.c.25.o
 
 .debug_aranges  0x0000000000000000      0x130
  .debug_aranges
@@ -1550,23 +1548,23 @@ OUTPUT(/home/christophe/pebble-projects/RSVP-Breaking-News/build/aplite/pebble-a
  .debug_aranges
                 0x0000000000000118       0x18 src/message_keys.auto.c.25.o
 
-.debug_ranges   0x0000000000000000      0x390
- .debug_ranges  0x0000000000000000      0x390 src/c/rsvp_news.c.25.o
+.debug_ranges   0x0000000000000000      0x3b0
+ .debug_ranges  0x0000000000000000      0x3b0 src/c/rsvp_news.c.25.o
 
-.debug_line     0x0000000000000000      0x99e
- .debug_line    0x0000000000000000      0x795 src/c/rsvp_news.c.25.o
- .debug_line    0x0000000000000795      0x122 aplite/appinfo.auto.c.25.o
- .debug_line    0x00000000000008b7       0x1d aplite/src/resource_ids.auto.c.25.o
- .debug_line    0x00000000000008d4       0xca src/message_keys.auto.c.25.o
+.debug_line     0x0000000000000000      0x99b
+ .debug_line    0x0000000000000000      0x792 src/c/rsvp_news.c.25.o
+ .debug_line    0x0000000000000792      0x122 aplite/appinfo.auto.c.25.o
+ .debug_line    0x00000000000008b4       0x1d aplite/src/resource_ids.auto.c.25.o
+ .debug_line    0x00000000000008d1       0xca src/message_keys.auto.c.25.o
 
-.debug_str      0x0000000000000000     0x17da
- .debug_str     0x0000000000000000     0x149b src/c/rsvp_news.c.25.o
-                                       0x15d0 (size before relaxing)
- .debug_str     0x000000000000149b      0x22f aplite/appinfo.auto.c.25.o
+.debug_str      0x0000000000000000     0x17d4
+ .debug_str     0x0000000000000000     0x1495 src/c/rsvp_news.c.25.o
+                                       0x15ca (size before relaxing)
+ .debug_str     0x0000000000001495      0x22f aplite/appinfo.auto.c.25.o
                                         0x328 (size before relaxing)
- .debug_str     0x00000000000016ca       0x1f aplite/src/resource_ids.auto.c.25.o
+ .debug_str     0x00000000000016c4       0x1f aplite/src/resource_ids.auto.c.25.o
                                          0xe9 (size before relaxing)
- .debug_str     0x00000000000016e9       0xf1 src/message_keys.auto.c.25.o
+ .debug_str     0x00000000000016e3       0xf1 src/message_keys.auto.c.25.o
                                         0x1c4 (size before relaxing)
 
 .debug_frame    0x0000000000000000      0x2c8

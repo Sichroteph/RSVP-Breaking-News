@@ -90,6 +90,56 @@ function decodeHtmlEntities(text) {
   decoded = decoded.replace(/&ldquo;/g, '"');
   decoded = decoded.replace(/&mdash;/g, '-');
   decoded = decoded.replace(/&ndash;/g, '-');
+  
+  // French accented characters
+  decoded = decoded.replace(/&eacute;/g, 'é');
+  decoded = decoded.replace(/&#233;/g, 'é');
+  decoded = decoded.replace(/&egrave;/g, 'è');
+  decoded = decoded.replace(/&#232;/g, 'è');
+  decoded = decoded.replace(/&ecirc;/g, 'ê');
+  decoded = decoded.replace(/&#234;/g, 'ê');
+  decoded = decoded.replace(/&euml;/g, 'ë');
+  decoded = decoded.replace(/&#235;/g, 'ë');
+  decoded = decoded.replace(/&agrave;/g, 'à');
+  decoded = decoded.replace(/&#224;/g, 'à');
+  decoded = decoded.replace(/&acirc;/g, 'â');
+  decoded = decoded.replace(/&#226;/g, 'â');
+  decoded = decoded.replace(/&auml;/g, 'ä');
+  decoded = decoded.replace(/&#228;/g, 'ä');
+  decoded = decoded.replace(/&ugrave;/g, 'ù');
+  decoded = decoded.replace(/&#249;/g, 'ù');
+  decoded = decoded.replace(/&ucirc;/g, 'û');
+  decoded = decoded.replace(/&#251;/g, 'û');
+  decoded = decoded.replace(/&uuml;/g, 'ü');
+  decoded = decoded.replace(/&#252;/g, 'ü');
+  decoded = decoded.replace(/&ocirc;/g, 'ô');
+  decoded = decoded.replace(/&#244;/g, 'ô');
+  decoded = decoded.replace(/&ouml;/g, 'ö');
+  decoded = decoded.replace(/&#246;/g, 'ö');
+  decoded = decoded.replace(/&icirc;/g, 'î');
+  decoded = decoded.replace(/&#238;/g, 'î');
+  decoded = decoded.replace(/&iuml;/g, 'ï');
+  decoded = decoded.replace(/&#239;/g, 'ï');
+  decoded = decoded.replace(/&ccedil;/g, 'ç');
+  decoded = decoded.replace(/&#231;/g, 'ç');
+  decoded = decoded.replace(/&aelig;/g, 'æ');
+  decoded = decoded.replace(/&#230;/g, 'æ');
+  decoded = decoded.replace(/&oelig;/g, 'œ');
+  decoded = decoded.replace(/&#339;/g, 'œ');
+  
+  // Capital accented characters
+  decoded = decoded.replace(/&Eacute;/g, 'É');
+  decoded = decoded.replace(/&#201;/g, 'É');
+  decoded = decoded.replace(/&Egrave;/g, 'È');
+  decoded = decoded.replace(/&#200;/g, 'È');
+  decoded = decoded.replace(/&Ecirc;/g, 'Ê');
+  decoded = decoded.replace(/&#202;/g, 'Ê');
+  decoded = decoded.replace(/&Agrave;/g, 'À');
+  decoded = decoded.replace(/&#192;/g, 'À');
+  decoded = decoded.replace(/&Acirc;/g, 'Â');
+  decoded = decoded.replace(/&#194;/g, 'Â');
+  decoded = decoded.replace(/&Ccedil;/g, 'Ç');
+  decoded = decoded.replace(/&#199;/g, 'Ç');
 
   return decoded;
 }
@@ -225,15 +275,15 @@ function sendNextNewsItem() {
 function sendFeedNames() {
   loadFeeds();
   g_feeds_sent_index = 0;
-  
+
   // First send the count
   var dict = {};
   dict[KEY_FEEDS_COUNT] = g_feeds.length;
-  Pebble.sendAppMessage(dict, function() {
+  Pebble.sendAppMessage(dict, function () {
     console.log('Feeds count sent: ' + g_feeds.length);
     // Then send each feed name
     sendNextFeedName();
-  }, function(e) {
+  }, function (e) {
     console.log('Failed to send feeds count: ' + JSON.stringify(e));
   });
 }
@@ -249,12 +299,12 @@ function sendNextFeedName() {
 
   var dict = {};
   dict[KEY_FEED_NAME] = feed.name;
-  Pebble.sendAppMessage(dict, function() {
+  Pebble.sendAppMessage(dict, function () {
     console.log('Feed name sent successfully');
     g_feeds_sent_index++;
     // Send next feed name after a short delay
     setTimeout(sendNextFeedName, 50);
-  }, function(e) {
+  }, function (e) {
     console.log('Failed to send feed name: ' + JSON.stringify(e));
   });
 }

@@ -15,11 +15,13 @@
       color: #888888;
       text-align: center;
     }
+
     .feed-list {
       list-style: none;
       padding: 0;
       margin: 0;
     }
+
     .feed-item {
       display: flex;
       align-items: center;
@@ -29,16 +31,20 @@
       cursor: grab;
       user-select: none;
     }
+
     .feed-item:active {
       cursor: grabbing;
     }
+
     .feed-item.dragging {
       opacity: 0.5;
       background: #e3f2fd;
     }
+
     .feed-item.drag-over {
       border-top: 2px solid #1a73e8;
     }
+
     .feed-name {
       flex: 1;
       font-size: 1em;
@@ -47,11 +53,13 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+
     .feed-drag-handle {
       color: #999;
       margin-right: 10px;
       font-size: 1.2em;
     }
+
     .feed-delete {
       color: #e53935;
       font-size: 1.2em;
@@ -60,9 +68,11 @@
       border: none;
       background: none;
     }
+
     .feed-delete:hover {
       color: #b71c1c;
     }
+
     .add-feed-btn {
       width: 100%;
       padding: 12px;
@@ -74,9 +84,11 @@
       margin-top: 10px;
       border-radius: 4px;
     }
+
     .add-feed-btn:hover {
       background: #45a049;
     }
+
     .modal {
       display: none;
       position: fixed;
@@ -84,14 +96,16 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       z-index: 1000;
       justify-content: center;
       align-items: center;
     }
+
     .modal.show {
       display: flex;
     }
+
     .modal-content {
       background: white;
       padding: 20px;
@@ -99,12 +113,14 @@
       width: 90%;
       max-width: 400px;
     }
+
     .modal-title {
       font-size: 1.2em;
       font-weight: bold;
       margin-bottom: 15px;
       color: #333;
     }
+
     .modal-input {
       width: 100%;
       padding: 10px;
@@ -114,12 +130,14 @@
       font-size: 1em;
       box-sizing: border-box;
     }
+
     .modal-buttons {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
       margin-top: 15px;
     }
+
     .modal-btn {
       padding: 10px 20px;
       border: none;
@@ -127,10 +145,12 @@
       cursor: pointer;
       font-size: 1em;
     }
+
     .modal-btn-cancel {
       background: #e0e0e0;
       color: #333;
     }
+
     .modal-btn-add {
       background: #1a73e8;
       color: white;
@@ -264,13 +284,13 @@
     var list = document.getElementById('feed-list');
     list.innerHTML = '';
 
-    feeds.forEach(function(feed, index) {
+    feeds.forEach(function (feed, index) {
       var li = document.createElement('li');
       li.className = 'feed-item';
       li.draggable = true;
       li.dataset.index = index;
 
-      li.innerHTML = 
+      li.innerHTML =
         '<span class="feed-drag-handle">☰</span>' +
         '<span class="feed-name">' + escapeHtml(feed.name) + '</span>' +
         '<button type="button" class="feed-delete" onclick="deleteFeed(' + index + ')">✕</button>';
@@ -346,7 +366,7 @@
 
   function handleDragEnd(e) {
     this.classList.remove('dragging');
-    document.querySelectorAll('.feed-item').forEach(function(item) {
+    document.querySelectorAll('.feed-item').forEach(function (item) {
       item.classList.remove('drag-over');
     });
     draggedItem = null;
@@ -395,11 +415,11 @@
 
     var touch = e.touches[0];
     var elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-    var targetItem = elements.find(function(el) { 
-      return el.classList && el.classList.contains('feed-item') && el !== touchedItem; 
+    var targetItem = elements.find(function (el) {
+      return el.classList && el.classList.contains('feed-item') && el !== touchedItem;
     });
 
-    document.querySelectorAll('.feed-item').forEach(function(item) {
+    document.querySelectorAll('.feed-item').forEach(function (item) {
       item.classList.remove('drag-over');
     });
 
@@ -413,8 +433,8 @@
 
     var touch = e.changedTouches[0];
     var elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-    var targetItem = elements.find(function(el) { 
-      return el.classList && el.classList.contains('feed-item') && el !== touchedItem; 
+    var targetItem = elements.find(function (el) {
+      return el.classList && el.classList.contains('feed-item') && el !== touchedItem;
     });
 
     if (targetItem) {
@@ -428,7 +448,7 @@
       renderFeedList();
     }
 
-    document.querySelectorAll('.feed-item').forEach(function(item) {
+    document.querySelectorAll('.feed-item').forEach(function (item) {
       item.classList.remove('drag-over');
     });
     touchedItem = null;

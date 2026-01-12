@@ -4,12 +4,14 @@
 #define HEIGHT 168
 
 // Spritz constants for optimal word display
-#define SPRITZ_PIVOT_X (WIDTH / 2)             // X position of the pivot point
-#define SPRITZ_WORD_Y (HEIGHT / 2 - 5)         // Y position of word center (moved up 15px)
-#define SPRITZ_LINE_TOP_Y (SPRITZ_WORD_Y - 22) // Y of line above word
+#define SPRITZ_HEADER_Y 5              // Y position for HEADLINE/ARTICLE header
+#define SPRITZ_PIVOT_X (WIDTH / 2)     // X position of the pivot point
+#define SPRITZ_WORD_Y 55               // Y position of word center (moved up for header)
+#define SPRITZ_LINE_TOP_Y (SPRITZ_WORD_Y - 22)    // Y of line above word
 #define SPRITZ_LINE_BOTTOM_Y (SPRITZ_WORD_Y + 30) // Y of line below word
 #define SPRITZ_LINE_LENGTH 20  // Length of vertical guide lines
 #define SPRITZ_CIRCLE_RADIUS 5 // Radius of pivot indicator circle
+#define SPRITZ_HELP_Y (HEIGHT - 35)    // Y position for navigation help text
 
 // Message keys
 #define KEY_NEWS_TITLE 172
@@ -34,8 +36,8 @@ static MenuLayer *s_menu_layer;
 static bool s_showing_menu = true;
 
 // Feed/Journal data
-static char feed_names[20][32];       // Store up to 20 feed names
-static uint8_t feed_count = 0;        // Number of stored feeds
+static char feed_names[20][32];         // Store up to 20 feed names
+static uint8_t feed_count = 0;          // Number of stored feeds
 static int8_t selected_feed_index = -1; // Currently selected feed
 
 // News data
@@ -62,7 +64,6 @@ static bool s_backlight_enabled = true; // Keep backlight on during reading
 static bool s_splash_active = false;
 static bool s_end_screen = false;
 static bool s_paused = false;
-static bool s_show_focal_lines_only = false;
 static bool s_waiting_for_config = false;
 static bool s_first_news_after_splash =
     true; // True for first news, requires delay
@@ -180,24 +181,30 @@ static uint16_t calculate_spritz_delay(const char *word) {
 }
 
 // Menu layer callbacks
-static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index, void *data) {
+static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer,
+                                           uint16_t section_index, void *data) {
   return feed_count > 0 ? feed_count : 1;
 }
 
-static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *data) {
+static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer,
+                                   MenuIndex *cell_index, void *data) {
   if (feed_count == 0) {
     menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
   } else {
-    menu_cell_basic_draw(ctx, cell_layer, feed_names[cell_index->row], NULL, NULL);
+    menu_cell_basic_draw(ctx, cell_layer, feed_names[cell_index->row], NULL,
+                         NULL);
   }
 }
 
-static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
-  if (feed_count == 0) return;
-  
+static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index,
+                                 void *data) {
+  if (feed_count == 0)
+    return;
+
   selected_feed_index = cell_index->row;
-  APP_LOG(APP_LOG_LEVEL_INFO, "Selected feed: %d - %s", selected_feed_index, feed_names[selected_feed_index]);
-  
+  APP_LOG(APP_LOG_LEVEL_INFO, "Selected feed: %d - %s", selected_feed_index,
+          feed_names[selected_feed_index]);
+
   // Send feed selection to JS
   DictionaryIterator *iter;
   AppMessageResult result = app_message_outbox_begin(&iter);
@@ -206,39 +213,41 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
     app_message_outbox_send();
     APP_LOG(APP_LOG_LEVEL_INFO, "Feed selection sent");
   }
-  
+
   // Hide menu and show loading state
   hide_journal_menu();
-  
+
   // Reset news data
   news_titles_count = 0;
   current_news_index = -1;
   news_title[0] = '\0';
   rsvp_word[0] = '\0';
   s_first_news_after_splash = true;
-  
+
   layer_mark_dirty(s_canvas_layer);
 }
 
 static void show_journal_menu(void) {
-  if (!s_menu_layer) return;
-  
+  if (!s_menu_layer)
+    return;
+
   s_showing_menu = true;
   layer_set_hidden(menu_layer_get_layer(s_menu_layer), false);
   layer_set_hidden(s_canvas_layer, true);
   menu_layer_reload_data(s_menu_layer);
-  
+
   // Set menu click config
   menu_layer_set_click_config_onto_window(s_menu_layer, s_main_window);
 }
 
 static void hide_journal_menu(void) {
-  if (!s_menu_layer) return;
-  
+  if (!s_menu_layer)
+    return;
+
   s_showing_menu = false;
   layer_set_hidden(menu_layer_get_layer(s_menu_layer), true);
   layer_set_hidden(s_canvas_layer, false);
-  
+
   // Set canvas click config
   window_set_click_config_provider(s_main_window, click_config_provider);
 }
@@ -252,21 +261,12 @@ static void draw_rsvp_word(GContext *ctx) {
   graphics_context_set_stroke_color(ctx, GColorWhite);
   graphics_context_set_text_color(ctx, GColorWhite);
 
-  // Show navigation indicators only during pauses (when no word is displayed)
-  if (s_show_focal_lines_only) {
-    // Full indicators with Select option during pause - aligned to right
-    GFont font_indicator = fonts_get_system_font(FONT_KEY_GOTHIC_18);
-    graphics_draw_text(
-        ctx, "Previous ^", font_indicator, GRect(0, 25, WIDTH - 5, 20),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
-    graphics_draw_text(
-        ctx, "Select o", font_indicator, GRect(0, HEIGHT / 2 - 10, WIDTH - 5, 20),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
-    graphics_draw_text(
-        ctx, "Next v", font_indicator, GRect(0, HEIGHT - 45, WIDTH - 5, 20),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
-    return;
-  }
+  // Draw header: "HEADLINE" or "ARTICLE" at top, centered, bold
+  const char *header_text = s_reading_article ? "ARTICLE" : "HEADLINE";
+  GFont font_header = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  graphics_draw_text(ctx, header_text, font_header, 
+                     GRect(0, SPRITZ_HEADER_Y, WIDTH, 20),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 
   // Draw the horizontal guide lines above and below the word (always visible)
   int line_half_width = 60; // Half width of the horizontal line
@@ -376,24 +376,33 @@ static void draw_rsvp_word(GContext *ctx) {
                        NULL);
   }
 
+  // Draw navigation help at bottom in small italic font
+  GFont font_help = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+  graphics_context_set_text_color(ctx, GColorWhite);
+  
+  // Build help text based on current mode
+  const char *help_text;
+  if (s_reading_article) {
+    help_text = "Arrows:nav Select:stop Back:title";
+  } else {
+    help_text = "Arrows:nav Select:read Back:menu";
+  }
+  
+  graphics_draw_text(ctx, help_text, font_help, 
+                     GRect(0, SPRITZ_HELP_Y, WIDTH, 30),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  
   // Draw news counter (1/5, 2/5, etc.) in bottom right corner for titles only
   if (!s_reading_article && news_titles_count > 0 && current_news_index >= 0) {
     char counter[8];
-    snprintf(counter, sizeof(counter), "%d/%d", current_news_index + 1, news_titles_count);
+    snprintf(counter, sizeof(counter), "%d/%d", current_news_index + 1,
+             news_titles_count);
     GFont font_counter = fonts_get_system_font(FONT_KEY_GOTHIC_14);
     graphics_context_set_text_color(ctx, GColorWhite);
-    graphics_draw_text(ctx, counter, font_counter,
-                       GRect(0, HEIGHT - 20, WIDTH - 5, 18),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+    graphics_draw_text(
+        ctx, counter, font_counter, GRect(WIDTH - 35, SPRITZ_HELP_Y - 20, 30, 18),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
   }
-
-  // Draw mode indicator (TITLE or ARTICLE) in bottom left corner
-  GFont font_mode = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-  graphics_context_set_text_color(ctx, GColorWhite);
-  const char *mode_text = s_reading_article ? "ARTICLE" : "TITLE";
-  graphics_draw_text(ctx, mode_text, font_mode,
-                     GRect(5, HEIGHT - 20, 60, 18),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 }
 
 // Draw END screen
@@ -402,8 +411,8 @@ static void draw_end_screen(GContext *ctx) {
   graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
   graphics_context_set_text_color(ctx, GColorWhite);
 
-  GFont font = fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD);
-  graphics_draw_text(ctx, "END", font, GRect(0, HEIGHT / 2 - 25, WIDTH, 50),
+  GFont font_end = fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD);
+  graphics_draw_text(ctx, "END", font_end, GRect(0, HEIGHT / 2 - 25, WIDTH, 50),
                      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter,
                      NULL);
 }
@@ -439,11 +448,12 @@ static void draw_loading_screen(GContext *ctx) {
 
   // Show selected feed name
   if (selected_feed_index >= 0 && selected_feed_index < feed_count) {
-    graphics_draw_text(
-        ctx, feed_names[selected_feed_index], font_title, GRect(0, HEIGHT / 2 - 35, WIDTH, 30),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    graphics_draw_text(ctx, feed_names[selected_feed_index], font_title,
+                       GRect(0, HEIGHT / 2 - 35, WIDTH, 30),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter,
+                       NULL);
   }
-  
+
   graphics_draw_text(
       ctx, "Loading...", font_sub, GRect(0, HEIGHT / 2 + 5, WIDTH, 25),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
@@ -500,7 +510,6 @@ static void reset_app_state(void) {
   s_splash_active = false;
   s_end_screen = false;
   s_paused = false;
-  s_show_focal_lines_only = false;
   s_waiting_for_config = false;
   s_first_news_after_splash = true;
   s_reading_article = false;
@@ -596,8 +605,7 @@ static void rsvp_start_timer_callback(void *context);
 static void rsvp_start_timer_callback(void *context) {
   rsvp_start_timer = NULL;
 
-  // Disable focal lines only mode and show the first word
-  s_show_focal_lines_only = false;
+  // Show the first word
   layer_mark_dirty(s_canvas_layer);
 
   // Start the RSVP word timer with Spritz-style delay
@@ -638,9 +646,8 @@ static void start_rsvp_for_title(void) {
 
     // On first news after splash, start immediately without help screen
     // On subsequent news (after navigation), also start immediately
-    s_show_focal_lines_only = false;
     layer_mark_dirty(s_canvas_layer);
-    
+
     if (s_first_news_after_splash) {
       // First news: small delay before showing words
       rsvp_start_timer =
@@ -707,7 +714,6 @@ static void start_article_reading(void) {
   }
 
   if (extract_next_word()) {
-    s_show_focal_lines_only = false;
     layer_mark_dirty(s_canvas_layer);
 
     // Start the timer
@@ -743,8 +749,7 @@ static void rsvp_timer_callback(void *context) {
       // End of article - show splash then go to next title
       show_splash_then_next_title();
     } else {
-      // End of title - show focal lines and wait for user button press
-      s_show_focal_lines_only = true;
+      // End of title - wait for user button press
       layer_mark_dirty(s_canvas_layer);
     }
   }
@@ -796,7 +801,8 @@ static void inbox_received_callback(DictionaryIterator *iterator,
   if (feeds_count_tuple) {
     feed_count = feeds_count_tuple->value->uint8;
     APP_LOG(APP_LOG_LEVEL_INFO, "Received feeds count: %d", feed_count);
-    if (feed_count > 20) feed_count = 20;
+    if (feed_count > 20)
+      feed_count = 20;
     // Reset feed names array
     for (int i = 0; i < 20; i++) {
       feed_names[i][0] = '\0';
@@ -814,8 +820,10 @@ static void inbox_received_callback(DictionaryIterator *iterator,
     // Find first empty slot
     for (int i = 0; i < feed_count && i < 20; i++) {
       if (feed_names[i][0] == '\0') {
-        snprintf(feed_names[i], sizeof(feed_names[0]), "%s", feed_name_tuple->value->cstring);
-        APP_LOG(APP_LOG_LEVEL_INFO, "Received feed name %d: %s", i, feed_names[i]);
+        snprintf(feed_names[i], sizeof(feed_names[0]), "%s",
+                 feed_name_tuple->value->cstring);
+        APP_LOG(APP_LOG_LEVEL_INFO, "Received feed name %d: %s", i,
+                feed_names[i]);
         break;
       }
     }
@@ -1048,7 +1056,6 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
 
     // Show waiting state
     rsvp_word[0] = '\0';
-    s_show_focal_lines_only = true;
     layer_mark_dirty(s_canvas_layer);
   }
 }
@@ -1111,11 +1118,11 @@ static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
       app_timer_cancel(rsvp_start_timer);
       rsvp_start_timer = NULL;
     }
-    
+
     s_reading_article = false;
     news_article[0] = '\0';
     s_article_news_index = -1;
-    
+
     // Go back to showing the title
     start_rsvp_for_title();
     return;
@@ -1145,7 +1152,7 @@ static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
     app_timer_cancel(end_timer);
     end_timer = NULL;
   }
-  
+
   // Reset news state
   news_titles_count = 0;
   current_news_index = -1;
@@ -1153,9 +1160,8 @@ static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
   rsvp_word[0] = '\0';
   s_end_screen = false;
   s_paused = false;
-  s_show_focal_lines_only = false;
   s_first_news_after_splash = true;
-  
+
   // Show the journal menu
   show_journal_menu();
 }
@@ -1180,14 +1186,15 @@ static void main_window_load(Window *window) {
 
   // Create menu layer for journal selection
   s_menu_layer = menu_layer_create(bounds);
-  menu_layer_set_callbacks(s_menu_layer, NULL, (MenuLayerCallbacks){
-    .get_num_rows = menu_get_num_rows_callback,
-    .draw_row = menu_draw_row_callback,
-    .select_click = menu_select_callback,
-  });
+  menu_layer_set_callbacks(s_menu_layer, NULL,
+                           (MenuLayerCallbacks){
+                               .get_num_rows = menu_get_num_rows_callback,
+                               .draw_row = menu_draw_row_callback,
+                               .select_click = menu_select_callback,
+                           });
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
   layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
-  
+
   // Start with menu visible
   s_showing_menu = true;
 }
@@ -1220,7 +1227,8 @@ static void init(void) {
   // Charger l'option de rétroéclairage sauvegardée
   if (persist_exists(KEY_BACKLIGHT_ENABLED)) {
     s_backlight_enabled = persist_read_bool(KEY_BACKLIGHT_ENABLED);
-    APP_LOG(APP_LOG_LEVEL_INFO, "Loaded backlight enabled: %d", s_backlight_enabled);
+    APP_LOG(APP_LOG_LEVEL_INFO, "Loaded backlight enabled: %d",
+            s_backlight_enabled);
   } else {
     APP_LOG(APP_LOG_LEVEL_INFO, "Using default backlight enabled: true");
   }
