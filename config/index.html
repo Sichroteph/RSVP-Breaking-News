@@ -478,14 +478,14 @@
     var speedHeader = document.querySelector('.item-container:has(#input_reading_speed) .item-container-header');
     
     var speed = parseInt(speedInput.value);
-    var min = parseInt(speedInput.min);
-    var max = parseInt(speedInput.max);
     
-    // Calculate color from green to red
-    var ratio = (speed - min) / (max - min);
-    var red = Math.round(ratio * 255);
-    var green = Math.round((1 - ratio) * 255);
-    var color = 'rgb(' + red + ', ' + green + ', 0)';
+    // Green up to 500 WPM, then orange
+    var color;
+    if (speed <= 500) {
+      color = '#34a853'; // Green
+    } else {
+      color = '#ff9800'; // Orange
+    }
     
     speedDisplay.textContent = speedInput.value + ' WPM';
     speedDisplay.style.color = color;
