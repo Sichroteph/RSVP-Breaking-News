@@ -58,6 +58,7 @@ static uint8_t rsvp_word_index = 0;
 static uint16_t rsvp_wpm_ms = 150; // 150ms per word (400 WPM)
 static AppTimer *rsvp_timer = NULL;
 static AppTimer *rsvp_start_timer = NULL;
+static AppTimer *page_number_timer = NULL;
 static bool s_backlight_enabled = true; // Keep backlight on during reading
 
 // Display states
@@ -65,6 +66,7 @@ static bool s_splash_active = false;
 static bool s_end_screen = false;
 static bool s_paused = false;
 static bool s_waiting_for_config = false;
+static bool s_showing_page_number = false; // True when showing page number as word
 static bool s_first_news_after_splash =
     true; // True for first news, requires delay
 
@@ -295,7 +297,7 @@ static void draw_rsvp_word(GContext *ctx) {
     const char *help_line1 = "Arrows: navigation";
     const char *help_line2;
     const char *help_line3;
-    
+
     if (s_reading_article) {
       help_line2 = "Select: stop";
       help_line3 = "Back: title";
@@ -304,28 +306,17 @@ static void draw_rsvp_word(GContext *ctx) {
       help_line3 = "Back: menu";
     }
 
-    graphics_draw_text(ctx, help_line1, font_help, 
-                       GRect(5, SPRITZ_HELP_Y, WIDTH - 10, 18),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    graphics_draw_text(
+        ctx, help_line1, font_help, GRect(5, SPRITZ_HELP_Y, WIDTH - 10, 18),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
     graphics_draw_text(ctx, help_line2, font_help,
                        GRect(5, SPRITZ_HELP_Y + 15, WIDTH - 10, 18),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
+                       NULL);
     graphics_draw_text(ctx, help_line3, font_help,
                        GRect(5, SPRITZ_HELP_Y + 30, WIDTH - 10, 18),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-
-    // Draw news counter below navigation help for titles only
-    if (!s_reading_article && news_titles_count > 0 && current_news_index >= 0) {
-      char counter[8];
-      snprintf(counter, sizeof(counter), "%d/%d", current_news_index + 1,
-               news_titles_count);
-      GFont font_counter = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-      graphics_context_set_text_color(ctx, GColorWhite);
-      graphics_draw_text(ctx, counter, font_counter,
-                         GRect(5, SPRITZ_HELP_Y + 48, WIDTH - 10, 18),
-                         GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
-                         NULL);
-    }
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
+                       NULL);
     return;
   }
 
@@ -424,7 +415,7 @@ static void draw_rsvp_word(GContext *ctx) {
   const char *help_line1 = "Arrows: navigation";
   const char *help_line2;
   const char *help_line3;
-  
+
   if (s_reading_article) {
     help_line2 = "Select: stop";
     help_line3 = "Back: title";
@@ -433,28 +424,15 @@ static void draw_rsvp_word(GContext *ctx) {
     help_line3 = "Back: menu";
   }
 
-  graphics_draw_text(ctx, help_line1, font_help, 
-                     GRect(5, SPRITZ_HELP_Y, WIDTH - 10, 18),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-  graphics_draw_text(ctx, help_line2, font_help,
-                     GRect(5, SPRITZ_HELP_Y + 15, WIDTH - 10, 18),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-  graphics_draw_text(ctx, help_line3, font_help,
-                     GRect(5, SPRITZ_HELP_Y + 30, WIDTH - 10, 18),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-
-  // Draw news counter below navigation help for titles only
-  if (!s_reading_article && news_titles_count > 0 && current_news_index >= 0) {
-    char counter[8];
-    snprintf(counter, sizeof(counter), "%d/%d", current_news_index + 1,
-             news_titles_count);
-    GFont font_counter = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-    graphics_context_set_text_color(ctx, GColorWhite);
-    graphics_draw_text(ctx, counter, font_counter,
-                       GRect(5, SPRITZ_HELP_Y + 48, WIDTH - 10, 18),
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
-                       NULL);
-  }
+  graphics_draw_text(
+      ctx, help_line1, font_help, GRect(5, SPRITZ_HELP_Y, WIDTH - 10, 18),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  graphics_draw_text(
+      ctx, help_line2, font_help, GRect(5, SPRITZ_HELP_Y + 15, WIDTH - 10, 18),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  graphics_draw_text(
+      ctx, help_line3, font_help, GRect(5, SPRITZ_HELP_Y + 30, WIDTH - 10, 18),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 }
 
 // Draw END screen
@@ -549,6 +527,10 @@ static void reset_app_state(void) {
     app_timer_cancel(end_timer);
     end_timer = NULL;
   }
+  if (page_number_timer) {
+    app_timer_cancel(page_number_timer);
+    page_number_timer = NULL;
+  }
 
   // Reset state variables
   news_title[0] = '\0';
@@ -566,6 +548,7 @@ static void reset_app_state(void) {
   s_first_news_after_splash = true;
   s_reading_article = false;
   s_article_news_index = -1;
+  s_showing_page_number = false;
   news_article[0] = '\0';
 
   // Show the journal menu
@@ -652,6 +635,20 @@ static bool extract_next_word(void) {
 static void news_timer_callback(void *context);
 static void rsvp_timer_callback(void *context);
 static void rsvp_start_timer_callback(void *context);
+static void page_number_timer_callback(void *context);
+
+// Page number timer callback - shows page number as word after 500ms pause
+static void page_number_timer_callback(void *context) {
+  page_number_timer = NULL;
+  
+  // Display page number as a word (only for titles, not articles)
+  if (!s_reading_article && news_titles_count > 0 && current_news_index >= 0) {
+    snprintf(rsvp_word, sizeof(rsvp_word), "%d/%d", current_news_index + 1,
+             news_titles_count);
+    s_showing_page_number = true;
+    layer_mark_dirty(s_canvas_layer);
+  }
+}
 
 // RSVP start timer callback - called after 2 seconds to start showing words
 static void rsvp_start_timer_callback(void *context) {
@@ -678,6 +675,7 @@ static void end_timer_callback(void *context) {
 static void start_rsvp_for_title(void) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Starting RSVP for title");
   rsvp_word_index = 0;
+  s_showing_page_number = false;
   if (extract_next_word()) {
     APP_LOG(APP_LOG_LEVEL_INFO, "First word: %s", rsvp_word);
 
@@ -726,9 +724,14 @@ static void show_splash_then_next_title(void) {
     app_timer_cancel(rsvp_start_timer);
     rsvp_start_timer = NULL;
   }
+  if (page_number_timer) {
+    app_timer_cancel(page_number_timer);
+    page_number_timer = NULL;
+  }
 
   // Clear article mode
   s_reading_article = false;
+  s_showing_page_number = false;
   news_article[0] = '\0';
   rsvp_word[0] = '\0';
 
@@ -796,13 +799,17 @@ static void rsvp_timer_callback(void *context) {
   } else {
     // End of text
     rsvp_word[0] = '\0';
+    layer_mark_dirty(s_canvas_layer);
 
     if (s_reading_article) {
       // End of article - show splash then go to next title
       show_splash_then_next_title();
     } else {
-      // End of title - wait for user button press
-      layer_mark_dirty(s_canvas_layer);
+      // End of title - show page number after 500ms pause
+      if (page_number_timer) {
+        app_timer_cancel(page_number_timer);
+      }
+      page_number_timer = app_timer_register(500, page_number_timer_callback, NULL);
     }
   }
 }
@@ -1056,10 +1063,15 @@ static void display_news_at_index(int8_t index) {
     app_timer_cancel(end_timer);
     end_timer = NULL;
   }
+  if (page_number_timer) {
+    app_timer_cancel(page_number_timer);
+    page_number_timer = NULL;
+  }
 
   // Clear end screen state
   s_end_screen = false;
   s_paused = false;
+  s_showing_page_number = false;
 
   // Copy the selected title to news_title
   current_news_index = index;
@@ -1099,6 +1111,13 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
       app_timer_cancel(rsvp_start_timer);
       rsvp_start_timer = NULL;
     }
+    if (page_number_timer) {
+      app_timer_cancel(page_number_timer);
+      page_number_timer = NULL;
+    }
+
+    // Reset page number display state
+    s_showing_page_number = false;
 
     // Remember which news we're reading the article for
     s_article_news_index = current_news_index;
@@ -1204,6 +1223,10 @@ static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
     app_timer_cancel(end_timer);
     end_timer = NULL;
   }
+  if (page_number_timer) {
+    app_timer_cancel(page_number_timer);
+    page_number_timer = NULL;
+  }
 
   // Reset news state
   news_titles_count = 0;
@@ -1213,6 +1236,7 @@ static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
   s_end_screen = false;
   s_paused = false;
   s_first_news_after_splash = true;
+  s_showing_page_number = false;
 
   // Show the journal menu
   show_journal_menu();
@@ -1318,6 +1342,10 @@ static void deinit(void) {
   if (end_timer) {
     app_timer_cancel(end_timer);
     end_timer = NULL;
+  }
+  if (page_number_timer) {
+    app_timer_cancel(page_number_timer);
+    page_number_timer = NULL;
   }
 
   app_message_deregister_callbacks();
