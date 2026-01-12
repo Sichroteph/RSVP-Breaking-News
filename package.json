@@ -33,7 +33,14 @@
       "KEY_CONFIG_RECEIVED": 179
     },
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "png",
+          "name": "NEWSFEED_ICON",
+          "file": "NewsfeedIcon.png",
+          "menuIcon": true
+        }
+      ]
     }
   }
 }

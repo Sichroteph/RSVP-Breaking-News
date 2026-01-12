@@ -244,7 +244,7 @@ static void show_journal_menu(void) {
 
   // Set menu click config
   menu_layer_set_click_config_onto_window(s_menu_layer, s_main_window);
-  
+
   // Override back button to exit app when menu is showing
   window_set_click_config_provider(s_main_window, click_config_provider);
 }
@@ -848,7 +848,7 @@ static void rsvp_timer_callback(void *context) {
         app_timer_cancel(news_timer);
         news_timer = NULL;
       }
-      
+
       // Show page number after 500ms pause
       if (page_number_timer) {
         app_timer_cancel(page_number_timer);
@@ -984,7 +984,8 @@ static void inbox_received_callback(DictionaryIterator *iterator,
         start_rsvp_for_title();
       }
 
-      // Request more news if we haven't reached the limit and user is not navigating
+      // Request more news if we haven't reached the limit and user is not
+      // navigating
       if (news_titles_count < news_max_count && !s_user_navigating) {
         news_timer = app_timer_register(100, news_timer_callback, NULL);
       }
