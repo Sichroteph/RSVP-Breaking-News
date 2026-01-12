@@ -82,6 +82,8 @@ static void news_timer_callback(void *context);
 static void show_journal_menu(void);
 static void hide_journal_menu(void);
 static void click_config_provider(void *context);
+static void menu_click_config_provider(void *context);
+static void back_click_handler(ClickRecognizerRef recognizer, void *context);
 
 // Calculate the optimal recognition point (ORP) / pivot letter index
 // Based on Spritz algorithm from OpenSpritz
@@ -233,6 +235,30 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index,
   layer_mark_dirty(s_canvas_layer);
 }
 
+// Menu-specific click handlers
+static void menu_up_click_handler(ClickRecognizerRef recognizer,
+                                  void *context) {
+  menu_layer_set_selected_next(s_menu_layer, true, MenuRowAlignCenter, true);
+}
+
+static void menu_down_click_handler(ClickRecognizerRef recognizer,
+                                    void *context) {
+  menu_layer_set_selected_next(s_menu_layer, false, MenuRowAlignCenter, true);
+}
+
+static void menu_select_click_handler(ClickRecognizerRef recognizer,
+                                      void *context) {
+  MenuIndex index = menu_layer_get_selected_index(s_menu_layer);
+  menu_select_callback(s_menu_layer, &index, NULL);
+}
+
+static void menu_click_config_provider(void *context) {
+  window_single_click_subscribe(BUTTON_ID_UP, menu_up_click_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, menu_down_click_handler);
+  window_single_click_subscribe(BUTTON_ID_SELECT, menu_select_click_handler);
+  window_single_click_subscribe(BUTTON_ID_BACK, back_click_handler);
+}
+
 static void show_journal_menu(void) {
   if (!s_menu_layer)
     return;
@@ -242,11 +268,8 @@ static void show_journal_menu(void) {
   layer_set_hidden(s_canvas_layer, true);
   menu_layer_reload_data(s_menu_layer);
 
-  // Set menu click config
-  menu_layer_set_click_config_onto_window(s_menu_layer, s_main_window);
-
-  // Override back button to exit app when menu is showing
-  window_set_click_config_provider(s_main_window, click_config_provider);
+  // Set custom menu click config that handles navigation + back button
+  window_set_click_config_provider(s_main_window, menu_click_config_provider);
 }
 
 static void hide_journal_menu(void) {
@@ -397,7 +420,12 @@ static void draw_rsvp_word(GContext *ctx, GRect bounds) {
   }
 
   // Part 2: Pivot letter (with bold effect for emphasis)
+  // Use red color on color displays, white on B&W displays
+#ifdef PBL_COLOR
+  graphics_context_set_text_color(ctx, GColorRed);
+#else
   graphics_context_set_text_color(ctx, GColorWhite);
+#endif
 
   // Draw pivot letter multiple times with offsets to create strong bold effect
   graphics_draw_text(ctx, pivot_char, font, GRect(current_x, text_y, 50, 40),
@@ -1336,11 +1364,11 @@ static void main_window_load(Window *window) {
                                .draw_row = menu_draw_row_callback,
                                .select_click = menu_select_callback,
                            });
-  menu_layer_set_click_config_onto_window(s_menu_layer, window);
   layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
 
-  // Start with menu visible
+  // Start with menu visible and custom click config
   s_showing_menu = true;
+  window_set_click_config_provider(s_main_window, menu_click_config_provider);
 }
 
 static void main_window_unload(Window *window) {
