@@ -1,17 +1,12 @@
 #include <pebble.h>
 
-#define WIDTH 144
-#define HEIGHT 168
-
-// Spritz constants for optimal word display
+// Spritz constants for optimal word display (relative to screen dimensions)
 #define SPRITZ_HEADER_Y 5          // Y position for HEADLINE/ARTICLE header
-#define SPRITZ_PIVOT_X (WIDTH / 2) // X position of the pivot point
 #define SPRITZ_WORD_Y 55 // Y position of word center (moved up for header)
 #define SPRITZ_LINE_TOP_Y (SPRITZ_WORD_Y - 22)    // Y of line above word
 #define SPRITZ_LINE_BOTTOM_Y (SPRITZ_WORD_Y + 30) // Y of line below word
 #define SPRITZ_LINE_LENGTH 20       // Length of vertical guide lines
 #define SPRITZ_CIRCLE_RADIUS 5      // Radius of pivot indicator circle
-#define SPRITZ_HELP_Y (HEIGHT - 60) // Y position for navigation help text
 
 // Message keys
 #define KEY_NEWS_TITLE 172
@@ -262,10 +257,15 @@ static void hide_journal_menu(void) {
 }
 
 // Draw Spritz-style RSVP word display with pivot letter highlighting
-static void draw_rsvp_word(GContext *ctx) {
+static void draw_rsvp_word(GContext *ctx, GRect bounds) {
+  int width = bounds.size.w;
+  int height = bounds.size.h;
+  int pivot_x = width / 2;
+  int help_y = height - 60;
+  
   // Background
   graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(0, 0, width, height), 0, GCornerNone);
 
   graphics_context_set_stroke_color(ctx, GColorWhite);
   graphics_context_set_text_color(ctx, GColorWhite);
@@ -274,22 +274,22 @@ static void draw_rsvp_word(GContext *ctx) {
   const char *header_text = s_reading_article ? "ARTICLE" : "HEADLINE";
   GFont font_header = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
   graphics_draw_text(
-      ctx, header_text, font_header, GRect(0, SPRITZ_HEADER_Y, WIDTH, 20),
+      ctx, header_text, font_header, GRect(0, SPRITZ_HEADER_Y, width, 20),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 
   // Draw the horizontal guide lines above and below the word (always visible)
   int line_half_width = 60; // Half width of the horizontal line
   graphics_draw_line(
-      ctx, GPoint(SPRITZ_PIVOT_X - line_half_width, SPRITZ_LINE_TOP_Y),
-      GPoint(SPRITZ_PIVOT_X + line_half_width, SPRITZ_LINE_TOP_Y));
+      ctx, GPoint(pivot_x - line_half_width, SPRITZ_LINE_TOP_Y),
+      GPoint(pivot_x + line_half_width, SPRITZ_LINE_TOP_Y));
 
   graphics_draw_line(
-      ctx, GPoint(SPRITZ_PIVOT_X - line_half_width, SPRITZ_LINE_BOTTOM_Y),
-      GPoint(SPRITZ_PIVOT_X + line_half_width, SPRITZ_LINE_BOTTOM_Y));
+      ctx, GPoint(pivot_x - line_half_width, SPRITZ_LINE_BOTTOM_Y),
+      GPoint(pivot_x + line_half_width, SPRITZ_LINE_BOTTOM_Y));
 
   // Draw a small circle on the top line at the pivot position (pivot indicator)
   graphics_context_set_stroke_color(ctx, GColorWhite);
-  graphics_draw_circle(ctx, GPoint(SPRITZ_PIVOT_X, SPRITZ_LINE_TOP_Y),
+  graphics_draw_circle(ctx, GPoint(pivot_x, SPRITZ_LINE_TOP_Y),
                        SPRITZ_CIRCLE_RADIUS);
 
   // Handle empty or null word
@@ -314,14 +314,14 @@ static void draw_rsvp_word(GContext *ctx) {
     }
 
     graphics_draw_text(
-        ctx, help_line1, font_help, GRect(5, SPRITZ_HELP_Y, WIDTH - 10, 18),
+        ctx, help_line1, font_help, GRect(5, help_y, width - 10, 18),
         GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
     graphics_draw_text(ctx, help_line2, font_help,
-                       GRect(5, SPRITZ_HELP_Y + 15, WIDTH - 10, 18),
+                       GRect(5, help_y + 15, width - 10, 18),
                        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
                        NULL);
     graphics_draw_text(ctx, help_line3, font_help,
-                       GRect(5, SPRITZ_HELP_Y + 30, WIDTH - 10, 18),
+                       GRect(5, help_y + 30, width - 10, 18),
                        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
                        NULL);
     return;
@@ -334,6 +334,14 @@ static void draw_rsvp_word(GContext *ctx) {
 
   // Get the pivot index based on Spritz algorithm
   int pivot_idx = get_pivot_index(word_length);
+  
+  // Safety check: ensure pivot_idx is within bounds
+  if (pivot_idx >= word_length) {
+    pivot_idx = word_length - 1;
+  }
+  if (pivot_idx < 0) {
+    pivot_idx = 0;
+  }
 
   // Font for word display
   GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_28);
@@ -344,11 +352,11 @@ static void draw_rsvp_word(GContext *ctx) {
   // Width of the pivot letter itself
   int pivot_char_width = get_char_width(ctx, word[pivot_idx], font);
 
-  // Calculate X position so pivot letter is centered at SPRITZ_PIVOT_X
-  // The pivot letter's center should be at SPRITZ_PIVOT_X
+  // Calculate X position so pivot letter is centered at pivot_x
+  // The pivot letter's center should be at pivot_x
   // Shift 3 pixels to the left
   int word_x =
-      SPRITZ_PIVOT_X - pre_pivot_width - (pivot_char_width / 2) + 2 - 3;
+      pivot_x - pre_pivot_width - (pivot_char_width / 2) + 2 - 3;
 
   // Y position for text
   int text_y = SPRITZ_WORD_Y - 16; // Adjust for font baseline
@@ -434,84 +442,95 @@ static void draw_rsvp_word(GContext *ctx) {
   }
 
   graphics_draw_text(
-      ctx, help_line1, font_help, GRect(5, SPRITZ_HELP_Y, WIDTH - 10, 18),
+      ctx, help_line1, font_help, GRect(5, help_y, width - 10, 18),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
   graphics_draw_text(
-      ctx, help_line2, font_help, GRect(5, SPRITZ_HELP_Y + 15, WIDTH - 10, 18),
+      ctx, help_line2, font_help, GRect(5, help_y + 15, width - 10, 18),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
   graphics_draw_text(
-      ctx, help_line3, font_help, GRect(5, SPRITZ_HELP_Y + 30, WIDTH - 10, 18),
+      ctx, help_line3, font_help, GRect(5, help_y + 30, width - 10, 18),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 }
 
 // Draw END screen
-static void draw_end_screen(GContext *ctx) {
+static void draw_end_screen(GContext *ctx, GRect bounds) {
+  int width = bounds.size.w;
+  int height = bounds.size.h;
+  
   graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(0, 0, width, height), 0, GCornerNone);
   graphics_context_set_text_color(ctx, GColorWhite);
 
   GFont font_end = fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD);
-  graphics_draw_text(ctx, "END", font_end, GRect(0, HEIGHT / 2 - 25, WIDTH, 50),
+  graphics_draw_text(ctx, "END", font_end, GRect(0, height / 2 - 25, width, 50),
                      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter,
                      NULL);
 }
 
 // Draw waiting for config screen
-static void draw_waiting_screen(GContext *ctx) {
+static void draw_waiting_screen(GContext *ctx, GRect bounds) {
+  int width = bounds.size.w;
+  int height = bounds.size.h;
+  
   graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(0, 0, width, height), 0, GCornerNone);
   graphics_context_set_text_color(ctx, GColorWhite);
 
   GFont font_title = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
   GFont font_sub = fonts_get_system_font(FONT_KEY_GOTHIC_18);
 
   graphics_draw_text(
-      ctx, "Settings", font_title, GRect(0, HEIGHT / 2 - 35, WIDTH, 30),
+      ctx, "Settings", font_title, GRect(0, height / 2 - 35, width, 30),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
   graphics_draw_text(
-      ctx, "Use your phone", font_sub, GRect(0, HEIGHT / 2, WIDTH, 25),
+      ctx, "Use your phone", font_sub, GRect(0, height / 2, width, 25),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
   graphics_draw_text(
-      ctx, "to configure...", font_sub, GRect(0, HEIGHT / 2 + 20, WIDTH, 25),
+      ctx, "to configure...", font_sub, GRect(0, height / 2 + 20, width, 25),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 }
 
 // Draw loading screen (waiting for news)
-static void draw_loading_screen(GContext *ctx) {
+static void draw_loading_screen(GContext *ctx, GRect bounds) {
+  int width = bounds.size.w;
+  int height = bounds.size.h;
+  
   graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(0, 0, width, height), 0, GCornerNone);
   graphics_context_set_text_color(ctx, GColorWhite);
 
   GFont font_title = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
   GFont font_sub = fonts_get_system_font(FONT_KEY_GOTHIC_18);
 
   // Show selected feed name
-  if (selected_feed_index >= 0 && selected_feed_index < feed_count) {
+  if (selected_feed_index >= 0 && selected_feed_index < (int8_t)feed_count) {
     graphics_draw_text(ctx, feed_names[selected_feed_index], font_title,
-                       GRect(0, HEIGHT / 2 - 35, WIDTH, 30),
+                       GRect(0, height / 2 - 35, width, 30),
                        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter,
                        NULL);
   }
 
   graphics_draw_text(
-      ctx, "Loading...", font_sub, GRect(0, HEIGHT / 2 + 5, WIDTH, 25),
+      ctx, "Loading...", font_sub, GRect(0, height / 2 + 5, width, 25),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 }
 
 // Main update proc
 static void update_proc(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_bounds(layer);
+  
   if (s_waiting_for_config) {
-    draw_waiting_screen(ctx);
+    draw_waiting_screen(ctx, bounds);
   } else if (s_showing_menu) {
     // Menu is shown separately
     return;
   } else if (news_titles_count == 0 && selected_feed_index >= 0) {
     // Waiting for news to load
-    draw_loading_screen(ctx);
+    draw_loading_screen(ctx, bounds);
   } else if (s_end_screen) {
-    draw_end_screen(ctx);
+    draw_end_screen(ctx, bounds);
   } else {
-    draw_rsvp_word(ctx);
+    draw_rsvp_word(ctx, bounds);
   }
 }
 
@@ -596,13 +615,20 @@ static void request_article_from_js(uint8_t index) {
 static bool extract_next_word(void) {
   // Use article if reading article, otherwise use title
   const char *p = s_reading_article ? news_article : news_title;
+  
+  // Safety check: ensure we have valid text
+  if (!p || p[0] == '\0') {
+    rsvp_word[0] = '\0';
+    return false;
+  }
+  
   uint16_t word_count = 0;
   uint16_t word_start = 0;
   uint16_t word_len = 0;
   uint16_t i = 0;
   bool in_word = false;
 
-  while (p[i] != '\0') {
+  while (p[i] != '\0' && i < 1000) { // Safety limit to prevent infinite loop
     if (p[i] == ' ' || p[i] == '\t' || p[i] == '\n') {
       if (in_word) {
         if (word_count == rsvp_word_index) {
@@ -885,7 +911,7 @@ static void inbox_received_callback(DictionaryIterator *iterator,
 
   // Handle feed name
   Tuple *feed_name_tuple = dict_find(iterator, KEY_FEED_NAME);
-  if (feed_name_tuple) {
+  if (feed_name_tuple && feed_name_tuple->value && feed_name_tuple->value->cstring) {
     // Find first empty slot
     for (int i = 0; i < feed_count && i < 20; i++) {
       if (feed_names[i][0] == '\0') {
@@ -905,7 +931,7 @@ static void inbox_received_callback(DictionaryIterator *iterator,
 
   // Handle article content
   Tuple *article_tuple = dict_find(iterator, KEY_NEWS_ARTICLE);
-  if (article_tuple) {
+  if (article_tuple && article_tuple->value && article_tuple->value->cstring) {
     snprintf(news_article, sizeof(news_article), "%s",
              article_tuple->value->cstring);
     APP_LOG(APP_LOG_LEVEL_INFO, "Received article (%d chars)",
@@ -917,7 +943,7 @@ static void inbox_received_callback(DictionaryIterator *iterator,
   }
 
   Tuple *news_title_tuple = dict_find(iterator, KEY_NEWS_TITLE);
-  if (news_title_tuple) {
+  if (news_title_tuple && news_title_tuple->value && news_title_tuple->value->cstring) {
     snprintf(news_title, sizeof(news_title), "%s",
              news_title_tuple->value->cstring);
     APP_LOG(APP_LOG_LEVEL_INFO, "Received title: %s", news_title);

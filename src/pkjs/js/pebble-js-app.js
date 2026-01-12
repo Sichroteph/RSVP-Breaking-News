@@ -189,58 +189,130 @@ function fetchRssFeed() {
 
 // Parse RSS XML
 function parseRssFeed(xmlText) {
-  var parser = new DOMParser();
-  var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+  console.log('Starting RSS parsing, text length: ' + xmlText.length);
+  
+  try {
+    // Try DOMParser first
+    if (typeof DOMParser !== 'undefined') {
+      console.log('Using DOMParser');
+      var parser = new DOMParser();
+      var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
-  var items = xmlDoc.getElementsByTagName('item');
-  console.log('Found ' + items.length + ' items in RSS feed');
+      var items = xmlDoc.getElementsByTagName('item');
+      console.log('Found ' + items.length + ' items in RSS feed');
 
-  // Get channel title
-  var channelElements = xmlDoc.getElementsByTagName('channel');
-  if (channelElements.length > 0) {
-    var titleElements = channelElements[0].getElementsByTagName('title');
-    if (titleElements.length > 0) {
-      g_channel_title = titleElements[0].textContent || '';
-      g_channel_title = decodeHtmlEntities(g_channel_title);
-      console.log('Channel title: ' + g_channel_title);
-      sendNewsChannelTitle();
+      // Get channel title
+      var channelElements = xmlDoc.getElementsByTagName('channel');
+      if (channelElements.length > 0) {
+        var titleElements = channelElements[0].getElementsByTagName('title');
+        if (titleElements.length > 0) {
+          g_channel_title = titleElements[0].textContent || '';
+          g_channel_title = decodeHtmlEntities(g_channel_title);
+          console.log('Channel title: ' + g_channel_title);
+          sendNewsChannelTitle();
+        }
+      }
+
+      // Parse items (title + description)
+      g_items = [];
+      for (var i = 0; i < items.length && i < 50; i++) {
+        var titleNode = items[i].getElementsByTagName('title')[0];
+        var descNode = items[i].getElementsByTagName('description')[0];
+
+        if (titleNode) {
+          var title = titleNode.textContent || '';
+          title = decodeHtmlEntities(title);
+          title = title.replace(/<[^>]*>/g, '');
+          title = title.trim();
+
+          var description = '';
+          if (descNode) {
+            description = descNode.textContent || '';
+            description = decodeHtmlEntities(description);
+            description = description.replace(/<[^>]*>/g, '');
+            description = description.trim();
+            if (description.length > 500) {
+              description = description.substring(0, 497) + '...';
+            }
+          }
+
+          if (title.length > 0) {
+            g_items.push({
+              title: title,
+              description: description
+            });
+          }
+        }
+      }
+      
+      if (g_items.length > 0) {
+        console.log('Parsed ' + g_items.length + ' news items with DOMParser');
+        g_current_index = 0;
+        sendNextNewsItem();
+        return;
+      }
     }
+  } catch (e) {
+    console.log('DOMParser failed: ' + e.message);
   }
+  
+  // Fallback: use regex parsing
+  console.log('Using regex fallback parsing');
+  parseRssFeedWithRegex(xmlText);
+}
 
-  // Parse items (title + description)
+// Fallback regex parser for RSS
+function parseRssFeedWithRegex(xmlText) {
   g_items = [];
-  for (var i = 0; i < items.length && i < 50; i++) {
-    var titleNode = items[i].getElementsByTagName('title')[0];
-    var descNode = items[i].getElementsByTagName('description')[0];
-
-    if (titleNode) {
-      var title = titleNode.textContent || '';
+  
+  // Extract channel title
+  var channelTitleMatch = xmlText.match(/<channel[^>]*>[\s\S]*?<title[^>]*>([^<]+)<\/title>/i);
+  if (channelTitleMatch) {
+    g_channel_title = decodeHtmlEntities(channelTitleMatch[1].trim());
+    console.log('Channel title (regex): ' + g_channel_title);
+    sendNewsChannelTitle();
+  }
+  
+  // Extract items using regex
+  var itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+  var titleRegex = /<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i;
+  var descRegex = /<description[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i;
+  
+  var match;
+  var count = 0;
+  while ((match = itemRegex.exec(xmlText)) !== null && count < 50) {
+    var itemContent = match[1];
+    
+    var titleMatch = itemContent.match(titleRegex);
+    if (titleMatch) {
+      var title = titleMatch[1];
       title = decodeHtmlEntities(title);
       title = title.replace(/<[^>]*>/g, '');
       title = title.trim();
-
+      
       var description = '';
-      if (descNode) {
-        description = descNode.textContent || '';
+      var descMatch = itemContent.match(descRegex);
+      if (descMatch) {
+        description = descMatch[1];
         description = decodeHtmlEntities(description);
-        description = description.replace(/<[^>]*>/g, '');  // Remove HTML tags
+        description = description.replace(/<[^>]*>/g, '');
         description = description.trim();
-        // Limit description length to 500 chars to fit in Pebble memory
         if (description.length > 500) {
           description = description.substring(0, 497) + '...';
         }
       }
-
+      
       if (title.length > 0) {
         g_items.push({
           title: title,
           description: description
         });
+        count++;
       }
     }
   }
 
-  console.log('Parsed ' + g_items.length + ' news items with descriptions');
+  console.log('Parsed ' + g_items.length + ' news items with regex');
   g_current_index = 0;
 
   if (g_items.length > 0) {
