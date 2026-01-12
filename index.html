@@ -94,6 +94,22 @@
       background: #45a049;
     }
 
+    .reset-feed-btn {
+      width: 100%;
+      padding: 12px;
+      background: #ff5722;
+      color: white;
+      border: none;
+      font-size: 1em;
+      cursor: pointer;
+      margin-top: 5px;
+      border-radius: 4px;
+    }
+
+    .reset-feed-btn:hover {
+      background: #e64a19;
+    }
+
     .modal {
       display: none;
       position: fixed;
@@ -186,6 +202,7 @@
       </ul>
       <div style='padding: 10px;'>
         <button type='button' class='add-feed-btn' onclick='showAddFeedModal()'>+ Add Feed</button>
+        <button type='button' class='reset-feed-btn' onclick='resetFeeds()'>↺ Reset to Default</button>
       </div>
     </div>
   </div>
@@ -343,6 +360,14 @@
     feeds.splice(index, 1);
     saveFeeds();
     renderFeedList();
+  }
+
+  function resetFeeds() {
+    if (confirm('Reset all feeds to default? Your custom feeds will be removed.')) {
+      feeds = defaultFeeds.slice();
+      saveFeeds();
+      renderFeedList();
+    }
   }
 
   function showAddFeedModal() {
