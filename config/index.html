@@ -15,30 +15,35 @@
       color: #888888;
       text-align: center;
     }
+
     .feed-list {
       list-style: none;
       padding: 0;
       margin: 0;
     }
+
     .feed-item {
       display: flex;
       align-items: center;
       padding: 12px 10px;
       background: #fff;
       border-bottom: 1px solid #e0e0e0;
-      cursor: grab;
       user-select: none;
     }
-    .feed-item:active {
+
+    .feed-item.dragging {
       cursor: grabbing;
     }
+
     .feed-item.dragging {
       opacity: 0.5;
       background: #e3f2fd;
     }
+
     .feed-item.drag-over {
       border-top: 2px solid #1a73e8;
     }
+
     .feed-name {
       flex: 1;
       font-size: 1em;
@@ -47,11 +52,19 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+
     .feed-drag-handle {
       color: #999;
       margin-right: 10px;
       font-size: 1.2em;
+      cursor: grab;
+      padding: 5px;
     }
+
+    .feed-drag-handle:active {
+      cursor: grabbing;
+    }
+
     .feed-delete {
       color: #e53935;
       font-size: 1.2em;
@@ -60,9 +73,11 @@
       border: none;
       background: none;
     }
+
     .feed-delete:hover {
       color: #b71c1c;
     }
+
     .add-feed-btn {
       width: 100%;
       padding: 12px;
@@ -74,9 +89,11 @@
       margin-top: 10px;
       border-radius: 4px;
     }
+
     .add-feed-btn:hover {
       background: #45a049;
     }
+
     .modal {
       display: none;
       position: fixed;
@@ -84,14 +101,16 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       z-index: 1000;
       justify-content: center;
       align-items: center;
     }
+
     .modal.show {
       display: flex;
     }
+
     .modal-content {
       background: white;
       padding: 20px;
@@ -99,12 +118,14 @@
       width: 90%;
       max-width: 400px;
     }
+
     .modal-title {
       font-size: 1.2em;
       font-weight: bold;
       margin-bottom: 15px;
       color: #333;
     }
+
     .modal-input {
       width: 100%;
       padding: 10px;
@@ -114,12 +135,14 @@
       font-size: 1em;
       box-sizing: border-box;
     }
+
     .modal-buttons {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
       margin-top: 15px;
     }
+
     .modal-btn {
       padding: 10px 20px;
       border: none;
@@ -127,10 +150,12 @@
       cursor: pointer;
       font-size: 1em;
     }
+
     .modal-btn-cancel {
       background: #e0e0e0;
       color: #333;
     }
+
     .modal-btn-add {
       background: #1a73e8;
       color: white;
@@ -144,7 +169,7 @@
   <div class='item-container'
     style='background-color: #1a73e8; border-radius: 8px; margin: 10px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
     <div style='color: #ffffff; text-align: center;'>
-      <strong style='font-size: 1.2em;'>⚡ RSVP Speed Reading</strong>
+      <strong style='font-size: 1.2em;'>RSVP Speed Reading</strong>
       <p style='margin: 10px 0 0 0; font-size: 0.9em; line-height: 1.4;'>
         RSVP (Rapid Serial Visual Presentation) displays words one at a time in the same spot,
         eliminating eye movements and enabling ultra-fast reading.
@@ -264,28 +289,41 @@
     var list = document.getElementById('feed-list');
     list.innerHTML = '';
 
-    feeds.forEach(function(feed, index) {
+    feeds.forEach(function (feed, index) {
       var li = document.createElement('li');
       li.className = 'feed-item';
-      li.draggable = true;
       li.dataset.index = index;
 
-      li.innerHTML = 
-        '<span class="feed-drag-handle">☰</span>' +
-        '<span class="feed-name">' + escapeHtml(feed.name) + '</span>' +
-        '<button type="button" class="feed-delete" onclick="deleteFeed(' + index + ')">✕</button>';
+      var dragHandle = document.createElement('span');
+      dragHandle.className = 'feed-drag-handle';
+      dragHandle.textContent = '☰';
+      dragHandle.draggable = true;
+      
+      var feedName = document.createElement('span');
+      feedName.className = 'feed-name';
+      feedName.textContent = feed.name;
+      
+      var deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'feed-delete';
+      deleteBtn.textContent = '✕';
+      deleteBtn.onclick = function() { deleteFeed(index); };
+      
+      li.appendChild(dragHandle);
+      li.appendChild(feedName);
+      li.appendChild(deleteBtn);
 
-      // Drag events
-      li.addEventListener('dragstart', handleDragStart);
+      // Drag events only on handle
+      dragHandle.addEventListener('dragstart', function(e) { handleDragStart.call(li, e); });
       li.addEventListener('dragend', handleDragEnd);
       li.addEventListener('dragover', handleDragOver);
       li.addEventListener('drop', handleDrop);
       li.addEventListener('dragleave', handleDragLeave);
 
-      // Touch events for mobile
-      li.addEventListener('touchstart', handleTouchStart, { passive: false });
-      li.addEventListener('touchmove', handleTouchMove, { passive: false });
-      li.addEventListener('touchend', handleTouchEnd);
+      // Touch events only on handle for mobile
+      dragHandle.addEventListener('touchstart', function(e) { handleTouchStart.call(li, e); }, { passive: false });
+      dragHandle.addEventListener('touchmove', handleTouchMove, { passive: false });
+      dragHandle.addEventListener('touchend', handleTouchEnd);
 
       list.appendChild(li);
     });
@@ -346,7 +384,7 @@
 
   function handleDragEnd(e) {
     this.classList.remove('dragging');
-    document.querySelectorAll('.feed-item').forEach(function(item) {
+    document.querySelectorAll('.feed-item').forEach(function (item) {
       item.classList.remove('drag-over');
     });
     draggedItem = null;
@@ -395,11 +433,11 @@
 
     var touch = e.touches[0];
     var elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-    var targetItem = elements.find(function(el) { 
-      return el.classList && el.classList.contains('feed-item') && el !== touchedItem; 
+    var targetItem = elements.find(function (el) {
+      return el.classList && el.classList.contains('feed-item') && el !== touchedItem;
     });
 
-    document.querySelectorAll('.feed-item').forEach(function(item) {
+    document.querySelectorAll('.feed-item').forEach(function (item) {
       item.classList.remove('drag-over');
     });
 
@@ -413,8 +451,8 @@
 
     var touch = e.changedTouches[0];
     var elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-    var targetItem = elements.find(function(el) { 
-      return el.classList && el.classList.contains('feed-item') && el !== touchedItem; 
+    var targetItem = elements.find(function (el) {
+      return el.classList && el.classList.contains('feed-item') && el !== touchedItem;
     });
 
     if (targetItem) {
@@ -428,7 +466,7 @@
       renderFeedList();
     }
 
-    document.querySelectorAll('.feed-item').forEach(function(item) {
+    document.querySelectorAll('.feed-item').forEach(function (item) {
       item.classList.remove('drag-over');
     });
     touchedItem = null;
@@ -437,7 +475,23 @@
   function updateSpeedDisplay() {
     var speedInput = document.getElementById('input_reading_speed');
     var speedDisplay = document.getElementById('speed_display');
+    var speedHeader = document.querySelector('.item-container:has(#input_reading_speed) .item-container-header');
+    
+    var speed = parseInt(speedInput.value);
+    var min = parseInt(speedInput.min);
+    var max = parseInt(speedInput.max);
+    
+    // Calculate color from green to red
+    var ratio = (speed - min) / (max - min);
+    var red = Math.round(ratio * 255);
+    var green = Math.round((1 - ratio) * 255);
+    var color = 'rgb(' + red + ', ' + green + ', 0)';
+    
     speedDisplay.textContent = speedInput.value + ' WPM';
+    speedDisplay.style.color = color;
+    if (speedHeader) {
+      speedHeader.style.backgroundColor = color;
+    }
   }
 
   function getConfigData() {
