@@ -90,7 +90,7 @@ function decodeHtmlEntities(text) {
   decoded = decoded.replace(/&ldquo;/g, '"');
   decoded = decoded.replace(/&mdash;/g, '-');
   decoded = decoded.replace(/&ndash;/g, '-');
-  
+
   // French accented characters
   decoded = decoded.replace(/&eacute;/g, 'é');
   decoded = decoded.replace(/&#233;/g, 'é');
@@ -126,7 +126,7 @@ function decodeHtmlEntities(text) {
   decoded = decoded.replace(/&#230;/g, 'æ');
   decoded = decoded.replace(/&oelig;/g, 'œ');
   decoded = decoded.replace(/&#339;/g, 'œ');
-  
+
   // Capital accented characters
   decoded = decoded.replace(/&Eacute;/g, 'É');
   decoded = decoded.replace(/&#201;/g, 'É');

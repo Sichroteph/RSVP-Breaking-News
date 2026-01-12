@@ -4,14 +4,14 @@
 #define HEIGHT 168
 
 // Spritz constants for optimal word display
-#define SPRITZ_HEADER_Y 5              // Y position for HEADLINE/ARTICLE header
-#define SPRITZ_PIVOT_X (WIDTH / 2)     // X position of the pivot point
-#define SPRITZ_WORD_Y 55               // Y position of word center (moved up for header)
+#define SPRITZ_HEADER_Y 5          // Y position for HEADLINE/ARTICLE header
+#define SPRITZ_PIVOT_X (WIDTH / 2) // X position of the pivot point
+#define SPRITZ_WORD_Y 55 // Y position of word center (moved up for header)
 #define SPRITZ_LINE_TOP_Y (SPRITZ_WORD_Y - 22)    // Y of line above word
 #define SPRITZ_LINE_BOTTOM_Y (SPRITZ_WORD_Y + 30) // Y of line below word
-#define SPRITZ_LINE_LENGTH 20  // Length of vertical guide lines
-#define SPRITZ_CIRCLE_RADIUS 5 // Radius of pivot indicator circle
-#define SPRITZ_HELP_Y (HEIGHT - 35)    // Y position for navigation help text
+#define SPRITZ_LINE_LENGTH 20       // Length of vertical guide lines
+#define SPRITZ_CIRCLE_RADIUS 5      // Radius of pivot indicator circle
+#define SPRITZ_HELP_Y (HEIGHT - 60) // Y position for navigation help text
 
 // Message keys
 #define KEY_NEWS_TITLE 172
@@ -264,9 +264,9 @@ static void draw_rsvp_word(GContext *ctx) {
   // Draw header: "HEADLINE" or "ARTICLE" at top, centered, bold
   const char *header_text = s_reading_article ? "ARTICLE" : "HEADLINE";
   GFont font_header = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
-  graphics_draw_text(ctx, header_text, font_header, 
-                     GRect(0, SPRITZ_HEADER_Y, WIDTH, 20),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  graphics_draw_text(
+      ctx, header_text, font_header, GRect(0, SPRITZ_HEADER_Y, WIDTH, 20),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 
   // Draw the horizontal guide lines above and below the word (always visible)
   int line_half_width = 60; // Half width of the horizontal line
@@ -286,6 +286,46 @@ static void draw_rsvp_word(GContext *ctx) {
   // Handle empty or null word
   const char *word = (rsvp_word[0] != '\0') ? rsvp_word : "";
   if (word[0] == '\0') {
+    // Even when no word is displayed, show navigation help and counter
+    // Draw navigation help at bottom in small font, left-aligned, 3 lines
+    GFont font_help = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+    graphics_context_set_text_color(ctx, GColorWhite);
+
+    // Build help text based on current mode (3 separate lines)
+    const char *help_line1 = "Arrows: navigation";
+    const char *help_line2;
+    const char *help_line3;
+    
+    if (s_reading_article) {
+      help_line2 = "Select: stop";
+      help_line3 = "Back: title";
+    } else {
+      help_line2 = "Select: read";
+      help_line3 = "Back: menu";
+    }
+
+    graphics_draw_text(ctx, help_line1, font_help, 
+                       GRect(5, SPRITZ_HELP_Y, WIDTH - 10, 18),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    graphics_draw_text(ctx, help_line2, font_help,
+                       GRect(5, SPRITZ_HELP_Y + 15, WIDTH - 10, 18),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    graphics_draw_text(ctx, help_line3, font_help,
+                       GRect(5, SPRITZ_HELP_Y + 30, WIDTH - 10, 18),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+
+    // Draw news counter below navigation help for titles only
+    if (!s_reading_article && news_titles_count > 0 && current_news_index >= 0) {
+      char counter[8];
+      snprintf(counter, sizeof(counter), "%d/%d", current_news_index + 1,
+               news_titles_count);
+      GFont font_counter = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+      graphics_context_set_text_color(ctx, GColorWhite);
+      graphics_draw_text(ctx, counter, font_counter,
+                         GRect(5, SPRITZ_HELP_Y + 48, WIDTH - 10, 18),
+                         GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
+                         NULL);
+    }
     return;
   }
 
@@ -376,32 +416,44 @@ static void draw_rsvp_word(GContext *ctx) {
                        NULL);
   }
 
-  // Draw navigation help at bottom in small italic font
+  // Draw navigation help at bottom in small font, left-aligned, 3 lines
   GFont font_help = fonts_get_system_font(FONT_KEY_GOTHIC_14);
   graphics_context_set_text_color(ctx, GColorWhite);
+
+  // Build help text based on current mode (3 separate lines)
+  const char *help_line1 = "Arrows: navigation";
+  const char *help_line2;
+  const char *help_line3;
   
-  // Build help text based on current mode
-  const char *help_text;
   if (s_reading_article) {
-    help_text = "Arrows:nav Select:stop Back:title";
+    help_line2 = "Select: stop";
+    help_line3 = "Back: title";
   } else {
-    help_text = "Arrows:nav Select:read Back:menu";
+    help_line2 = "Select: read";
+    help_line3 = "Back: menu";
   }
-  
-  graphics_draw_text(ctx, help_text, font_help, 
-                     GRect(0, SPRITZ_HELP_Y, WIDTH, 30),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-  
-  // Draw news counter (1/5, 2/5, etc.) in bottom right corner for titles only
+
+  graphics_draw_text(ctx, help_line1, font_help, 
+                     GRect(5, SPRITZ_HELP_Y, WIDTH - 10, 18),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, help_line2, font_help,
+                     GRect(5, SPRITZ_HELP_Y + 15, WIDTH - 10, 18),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, help_line3, font_help,
+                     GRect(5, SPRITZ_HELP_Y + 30, WIDTH - 10, 18),
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+
+  // Draw news counter below navigation help for titles only
   if (!s_reading_article && news_titles_count > 0 && current_news_index >= 0) {
     char counter[8];
     snprintf(counter, sizeof(counter), "%d/%d", current_news_index + 1,
              news_titles_count);
     GFont font_counter = fonts_get_system_font(FONT_KEY_GOTHIC_14);
     graphics_context_set_text_color(ctx, GColorWhite);
-    graphics_draw_text(
-        ctx, counter, font_counter, GRect(WIDTH - 35, SPRITZ_HELP_Y - 20, 30, 18),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+    graphics_draw_text(ctx, counter, font_counter,
+                       GRect(5, SPRITZ_HELP_Y + 48, WIDTH - 10, 18),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
+                       NULL);
   }
 }
 
