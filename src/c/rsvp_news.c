@@ -744,17 +744,10 @@ static void show_splash_then_next_title(void) {
   news_article[0] = '\0';
   rsvp_word[0] = '\0';
 
-  // Move to next title
-  int8_t next_index;
-  if (s_article_news_index >= news_titles_count - 1) {
-    next_index = 0; // Wrap to beginning
-  } else {
-    next_index = s_article_news_index + 1;
-  }
-
+  // Stay on the same title (don't increment)
+  current_news_index = s_article_news_index;
   s_article_news_index = -1;
-  current_news_index = next_index;
-  snprintf(news_title, sizeof(news_title), "%s", news_titles[next_index]);
+  snprintf(news_title, sizeof(news_title), "%s", news_titles[current_news_index]);
 
   // Don't start reading - just show the page number after a pause
   rsvp_word[0] = '\0';
