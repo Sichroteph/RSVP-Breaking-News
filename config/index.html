@@ -15,6 +15,126 @@
       color: #888888;
       text-align: center;
     }
+    .feed-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .feed-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 10px;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: grab;
+      user-select: none;
+    }
+    .feed-item:active {
+      cursor: grabbing;
+    }
+    .feed-item.dragging {
+      opacity: 0.5;
+      background: #e3f2fd;
+    }
+    .feed-item.drag-over {
+      border-top: 2px solid #1a73e8;
+    }
+    .feed-name {
+      flex: 1;
+      font-size: 1em;
+      color: #333;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .feed-drag-handle {
+      color: #999;
+      margin-right: 10px;
+      font-size: 1.2em;
+    }
+    .feed-delete {
+      color: #e53935;
+      font-size: 1.2em;
+      padding: 5px 10px;
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+    .feed-delete:hover {
+      color: #b71c1c;
+    }
+    .add-feed-btn {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      font-size: 1em;
+      cursor: pointer;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+    .add-feed-btn:hover {
+      background: #45a049;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal.show {
+      display: flex;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+    }
+    .modal-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    .modal-input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .modal-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    .modal-btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+    .modal-btn-add {
+      background: #1a73e8;
+      color: white;
+    }
   </style>
 </head>
 
@@ -34,31 +154,26 @@
   </div>
 
   <div class='item-container'>
-    <div class='item-container-header'>RSS Feed URL</div>
-    <div class='item-container-content'>
-      <label class='item'>
-        <div class='item-input-wrapper'>
-          <input type='text' class='item-input' input id='input_news_feed_url' placeholder='https://rss.app/feeds/...'>
-        </div>
-      </label>
-      <div class='item-container-footer'>
-        Quick presets:
+    <div class='item-container-header'>RSS Feeds</div>
+    <div class='item-container-content' style='padding: 0;'>
+      <ul id='feed-list' class='feed-list'>
+        <!-- Feeds will be populated by JavaScript -->
+      </ul>
+      <div style='padding: 10px;'>
+        <button type='button' class='add-feed-btn' onclick='showAddFeedModal()'>+ Add Feed</button>
       </div>
-      <div style='display: flex; flex-wrap: wrap; justify-content: space-between; padding: 5px 0;'>
-        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
-          onclick="document.getElementById('input_news_feed_url').value='https://feeds.bbci.co.uk/news/world/rss.xml'">BBC World</button>
-        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
-          onclick="document.getElementById('input_news_feed_url').value='https://rss.nytimes.com/services/xml/rss/nyt/World.xml'">NY Times</button>
-        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
-          onclick="document.getElementById('input_news_feed_url').value='https://feeds.npr.org/1001/rss.xml'">NPR News</button>
-      </div>
-      <div style='display: flex; flex-wrap: wrap; justify-content: space-between; padding: 5px 0;'>
-        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
-          onclick="document.getElementById('input_news_feed_url').value='https://www.theguardian.com/world/rss'">Guardian</button>
-        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
-          onclick="document.getElementById('input_news_feed_url').value='https://www.lemonde.fr/rss/une.xml'">Le Monde</button>
-        <button type='button' class='item-button' style='flex: 1 1 30%; margin: 2px; font-size: 0.75em; padding: 8px 4px;'
-          onclick="document.getElementById('input_news_feed_url').value='https://feeds.reuters.com/reuters/topNews'">Reuters</button>
+    </div>
+  </div>
+
+  <!-- Add Feed Modal -->
+  <div id='add-feed-modal' class='modal'>
+    <div class='modal-content'>
+      <div class='modal-title'>Add New Feed</div>
+      <input type='text' id='modal-feed-name' class='modal-input' placeholder='Feed Name (e.g., BBC World)'>
+      <input type='text' id='modal-feed-url' class='modal-input' placeholder='Feed URL (e.g., https://...)'>
+      <div class='modal-buttons'>
+        <button type='button' class='modal-btn modal-btn-cancel' onclick='hideAddFeedModal()'>Cancel</button>
+        <button type='button' class='modal-btn modal-btn-add' onclick='addFeedFromModal()'>Add</button>
       </div>
     </div>
   </div>
@@ -113,6 +228,211 @@
 </body>
 
 <script>
+  // Default feeds (the 6 presets)
+  var defaultFeeds = [
+    { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+    { name: 'NY Times', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+    { name: 'NPR News', url: 'https://feeds.npr.org/1001/rss.xml' },
+    { name: 'Guardian', url: 'https://www.theguardian.com/world/rss' },
+    { name: 'Le Monde', url: 'https://www.lemonde.fr/rss/une.xml' },
+    { name: 'Reuters', url: 'https://feeds.reuters.com/reuters/topNews' }
+  ];
+
+  // Current feeds list
+  var feeds = [];
+  var draggedItem = null;
+
+  function loadFeeds() {
+    var stored = localStorage.getItem('rss_feeds');
+    if (stored) {
+      try {
+        feeds = JSON.parse(stored);
+      } catch (e) {
+        feeds = defaultFeeds.slice();
+      }
+    } else {
+      feeds = defaultFeeds.slice();
+    }
+    renderFeedList();
+  }
+
+  function saveFeeds() {
+    localStorage.setItem('rss_feeds', JSON.stringify(feeds));
+  }
+
+  function renderFeedList() {
+    var list = document.getElementById('feed-list');
+    list.innerHTML = '';
+
+    feeds.forEach(function(feed, index) {
+      var li = document.createElement('li');
+      li.className = 'feed-item';
+      li.draggable = true;
+      li.dataset.index = index;
+
+      li.innerHTML = 
+        '<span class="feed-drag-handle">☰</span>' +
+        '<span class="feed-name">' + escapeHtml(feed.name) + '</span>' +
+        '<button type="button" class="feed-delete" onclick="deleteFeed(' + index + ')">✕</button>';
+
+      // Drag events
+      li.addEventListener('dragstart', handleDragStart);
+      li.addEventListener('dragend', handleDragEnd);
+      li.addEventListener('dragover', handleDragOver);
+      li.addEventListener('drop', handleDrop);
+      li.addEventListener('dragleave', handleDragLeave);
+
+      // Touch events for mobile
+      li.addEventListener('touchstart', handleTouchStart, { passive: false });
+      li.addEventListener('touchmove', handleTouchMove, { passive: false });
+      li.addEventListener('touchend', handleTouchEnd);
+
+      list.appendChild(li);
+    });
+  }
+
+  function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function deleteFeed(index) {
+    if (feeds.length <= 1) {
+      alert('You must keep at least one feed.');
+      return;
+    }
+    feeds.splice(index, 1);
+    saveFeeds();
+    renderFeedList();
+  }
+
+  function showAddFeedModal() {
+    document.getElementById('modal-feed-name').value = '';
+    document.getElementById('modal-feed-url').value = '';
+    document.getElementById('add-feed-modal').classList.add('show');
+  }
+
+  function hideAddFeedModal() {
+    document.getElementById('add-feed-modal').classList.remove('show');
+  }
+
+  function addFeedFromModal() {
+    var name = document.getElementById('modal-feed-name').value.trim();
+    var url = document.getElementById('modal-feed-url').value.trim();
+
+    if (!name) {
+      alert('Please enter a feed name.');
+      return;
+    }
+    if (!url) {
+      alert('Please enter a feed URL.');
+      return;
+    }
+
+    feeds.push({ name: name, url: url });
+    saveFeeds();
+    renderFeedList();
+    hideAddFeedModal();
+  }
+
+  // Drag and drop handlers
+  function handleDragStart(e) {
+    draggedItem = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.index);
+  }
+
+  function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.feed-item').forEach(function(item) {
+      item.classList.remove('drag-over');
+    });
+    draggedItem = null;
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (this !== draggedItem) {
+      this.classList.add('drag-over');
+    }
+  }
+
+  function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    if (draggedItem && this !== draggedItem) {
+      var fromIndex = parseInt(draggedItem.dataset.index);
+      var toIndex = parseInt(this.dataset.index);
+
+      var item = feeds.splice(fromIndex, 1)[0];
+      feeds.splice(toIndex, 0, item);
+
+      saveFeeds();
+      renderFeedList();
+    }
+  }
+
+  // Touch support for mobile drag
+  var touchStartY = 0;
+  var touchedItem = null;
+
+  function handleTouchStart(e) {
+    touchedItem = this;
+    touchStartY = e.touches[0].clientY;
+  }
+
+  function handleTouchMove(e) {
+    if (!touchedItem) return;
+    e.preventDefault();
+
+    var touch = e.touches[0];
+    var elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+    var targetItem = elements.find(function(el) { 
+      return el.classList && el.classList.contains('feed-item') && el !== touchedItem; 
+    });
+
+    document.querySelectorAll('.feed-item').forEach(function(item) {
+      item.classList.remove('drag-over');
+    });
+
+    if (targetItem) {
+      targetItem.classList.add('drag-over');
+    }
+  }
+
+  function handleTouchEnd(e) {
+    if (!touchedItem) return;
+
+    var touch = e.changedTouches[0];
+    var elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+    var targetItem = elements.find(function(el) { 
+      return el.classList && el.classList.contains('feed-item') && el !== touchedItem; 
+    });
+
+    if (targetItem) {
+      var fromIndex = parseInt(touchedItem.dataset.index);
+      var toIndex = parseInt(targetItem.dataset.index);
+
+      var item = feeds.splice(fromIndex, 1)[0];
+      feeds.splice(toIndex, 0, item);
+
+      saveFeeds();
+      renderFeedList();
+    }
+
+    document.querySelectorAll('.feed-item').forEach(function(item) {
+      item.classList.remove('drag-over');
+    });
+    touchedItem = null;
+  }
 
   function updateSpeedDisplay() {
     var speedInput = document.getElementById('input_reading_speed');
@@ -121,20 +441,19 @@
   }
 
   function getConfigData() {
-    var input_news_feed_url = document.getElementById('input_news_feed_url');
     var input_reading_speed = document.getElementById('input_reading_speed');
     var input_backlight_enabled = document.getElementById('input_backlight_enabled');
 
     var options = {
-      'input_news_feed_url': input_news_feed_url.value,
+      'rss_feeds': feeds,
       'reading_speed_wpm': parseInt(input_reading_speed.value),
       'backlight_enabled': input_backlight_enabled.checked
     };
 
     // Save for next launch
-    localStorage['input_news_feed_url'] = options['input_news_feed_url'];
-    localStorage['reading_speed_wpm'] = options['reading_speed_wpm'];
-    localStorage['backlight_enabled'] = options['backlight_enabled'];
+    localStorage.setItem('rss_feeds', JSON.stringify(feeds));
+    localStorage.setItem('reading_speed_wpm', options['reading_speed_wpm']);
+    localStorage.setItem('backlight_enabled', options['backlight_enabled']);
 
     console.log('Got options: ' + JSON.stringify(options));
     return options;
@@ -162,14 +481,15 @@
   });
 
   (function () {
-    var input_news_feed_url = document.getElementById('input_news_feed_url');
     var input_reading_speed = document.getElementById('input_reading_speed');
     var input_backlight_enabled = document.getElementById('input_backlight_enabled');
 
-    input_news_feed_url.value = localStorage['input_news_feed_url'] || 'https://feeds.bbci.co.uk/news/world/rss.xml';
     input_reading_speed.value = localStorage['reading_speed_wpm'] || '270';
     input_backlight_enabled.checked = localStorage['backlight_enabled'] !== 'false'; // Default true
     updateSpeedDisplay();
+
+    // Load feeds
+    loadFeeds();
   })();
 </script>
 

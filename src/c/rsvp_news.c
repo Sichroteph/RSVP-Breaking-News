@@ -20,10 +20,23 @@
 #define KEY_REQUEST_ARTICLE 180
 #define KEY_NEWS_ARTICLE 181
 #define KEY_BACKLIGHT_ENABLED 182
+#define KEY_FEED_NAME 183
+#define KEY_REQUEST_FEEDS 184
+#define KEY_SELECT_FEED 185
+#define KEY_FEEDS_COUNT 186
 
-// Main window and layer
+// Main window and layers
 static Window *s_main_window;
 static Layer *s_canvas_layer;
+
+// Menu for journal selection
+static MenuLayer *s_menu_layer;
+static bool s_showing_menu = true;
+
+// Feed/Journal data
+static char feed_names[20][32];       // Store up to 20 feed names
+static uint8_t feed_count = 0;        // Number of stored feeds
+static int8_t selected_feed_index = -1; // Currently selected feed
 
 // News data
 static char news_title[104] = "";
@@ -46,7 +59,7 @@ static AppTimer *rsvp_start_timer = NULL;
 static bool s_backlight_enabled = true; // Keep backlight on during reading
 
 // Display states
-static bool s_splash_active = true;
+static bool s_splash_active = false;
 static bool s_end_screen = false;
 static bool s_paused = false;
 static bool s_show_focal_lines_only = false;
@@ -66,6 +79,9 @@ static uint8_t news_max_retries = 3;
 
 // Forward declarations
 static void news_timer_callback(void *context);
+static void show_journal_menu(void);
+static void hide_journal_menu(void);
+static void click_config_provider(void *context);
 
 // Calculate the optimal recognition point (ORP) / pivot letter index
 // Based on Spritz algorithm from OpenSpritz
@@ -163,39 +179,68 @@ static uint16_t calculate_spritz_delay(const char *word) {
   return delay;
 }
 
-// Draw splash screen with Reuters branding
-static void draw_splash_screen(GContext *ctx) {
-  graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
+// Menu layer callbacks
+static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index, void *data) {
+  return feed_count > 0 ? feed_count : 1;
+}
 
-  graphics_context_set_text_color(ctx, GColorWhite);
-  graphics_context_set_stroke_color(ctx, GColorWhite);
-
-  // "REUTERS" - large centered title
-  graphics_draw_text(ctx, "REUTERS",
-                     fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD),
-                     GRect(0, 45, WIDTH, 35), GTextOverflowModeTrailingEllipsis,
-                     GTextAlignmentCenter, NULL);
-
-  // Horizontal line separator
-  int line_y = 85;
-  graphics_draw_line(ctx, GPoint(20, line_y), GPoint(WIDTH - 20, line_y));
-  graphics_draw_line(ctx, GPoint(20, line_y + 1),
-                     GPoint(WIDTH - 20, line_y + 1));
-
-  // "Breaking International News" - subtitle
-  GFont font_sub = fonts_get_system_font(FONT_KEY_GOTHIC_18);
-  graphics_draw_text(ctx, "Breaking", font_sub, GRect(0, 95, WIDTH, 22),
-                     GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter,
-                     NULL);
-  graphics_draw_text(
-      ctx, "International News", font_sub, GRect(0, 115, WIDTH, 22),
-      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-
-  // Small decorative dots
-  for (int i = 0; i < 3; i++) {
-    graphics_fill_circle(ctx, GPoint(WIDTH / 2 - 10 + i * 10, 148), 2);
+static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *data) {
+  if (feed_count == 0) {
+    menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
+  } else {
+    menu_cell_basic_draw(ctx, cell_layer, feed_names[cell_index->row], NULL, NULL);
   }
+}
+
+static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
+  if (feed_count == 0) return;
+  
+  selected_feed_index = cell_index->row;
+  APP_LOG(APP_LOG_LEVEL_INFO, "Selected feed: %d - %s", selected_feed_index, feed_names[selected_feed_index]);
+  
+  // Send feed selection to JS
+  DictionaryIterator *iter;
+  AppMessageResult result = app_message_outbox_begin(&iter);
+  if (result == APP_MSG_OK) {
+    dict_write_uint8(iter, KEY_SELECT_FEED, selected_feed_index);
+    app_message_outbox_send();
+    APP_LOG(APP_LOG_LEVEL_INFO, "Feed selection sent");
+  }
+  
+  // Hide menu and show loading state
+  hide_journal_menu();
+  
+  // Reset news data
+  news_titles_count = 0;
+  current_news_index = -1;
+  news_title[0] = '\0';
+  rsvp_word[0] = '\0';
+  s_first_news_after_splash = true;
+  
+  layer_mark_dirty(s_canvas_layer);
+}
+
+static void show_journal_menu(void) {
+  if (!s_menu_layer) return;
+  
+  s_showing_menu = true;
+  layer_set_hidden(menu_layer_get_layer(s_menu_layer), false);
+  layer_set_hidden(s_canvas_layer, true);
+  menu_layer_reload_data(s_menu_layer);
+  
+  // Set menu click config
+  menu_layer_set_click_config_onto_window(s_menu_layer, s_main_window);
+}
+
+static void hide_journal_menu(void) {
+  if (!s_menu_layer) return;
+  
+  s_showing_menu = false;
+  layer_set_hidden(menu_layer_get_layer(s_menu_layer), true);
+  layer_set_hidden(s_canvas_layer, false);
+  
+  // Set canvas click config
+  window_set_click_config_provider(s_main_window, click_config_provider);
 }
 
 // Draw Spritz-style RSVP word display with pivot letter highlighting
@@ -383,12 +428,37 @@ static void draw_waiting_screen(GContext *ctx) {
       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 }
 
+// Draw loading screen (waiting for news)
+static void draw_loading_screen(GContext *ctx) {
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(0, 0, WIDTH, HEIGHT), 0, GCornerNone);
+  graphics_context_set_text_color(ctx, GColorWhite);
+
+  GFont font_title = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
+  GFont font_sub = fonts_get_system_font(FONT_KEY_GOTHIC_18);
+
+  // Show selected feed name
+  if (selected_feed_index >= 0 && selected_feed_index < feed_count) {
+    graphics_draw_text(
+        ctx, feed_names[selected_feed_index], font_title, GRect(0, HEIGHT / 2 - 35, WIDTH, 30),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+  }
+  
+  graphics_draw_text(
+      ctx, "Loading...", font_sub, GRect(0, HEIGHT / 2 + 5, WIDTH, 25),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+}
+
 // Main update proc
 static void update_proc(Layer *layer, GContext *ctx) {
   if (s_waiting_for_config) {
     draw_waiting_screen(ctx);
-  } else if (s_splash_active) {
-    draw_splash_screen(ctx);
+  } else if (s_showing_menu) {
+    // Menu is shown separately
+    return;
+  } else if (news_titles_count == 0 && selected_feed_index >= 0) {
+    // Waiting for news to load
+    draw_loading_screen(ctx);
   } else if (s_end_screen) {
     draw_end_screen(ctx);
   } else {
@@ -426,7 +496,8 @@ static void reset_app_state(void) {
   news_retry_count = 0;
   news_titles_count = 0;
   current_news_index = -1;
-  s_splash_active = true;
+  selected_feed_index = -1;
+  s_splash_active = false;
   s_end_screen = false;
   s_paused = false;
   s_show_focal_lines_only = false;
@@ -436,10 +507,8 @@ static void reset_app_state(void) {
   s_article_news_index = -1;
   news_article[0] = '\0';
 
-  layer_mark_dirty(s_canvas_layer);
-
-  // Start fresh with splash screen then request news
-  news_timer = app_timer_register(500, news_timer_callback, NULL);
+  // Show the journal menu
+  show_journal_menu();
 }
 
 // Request news from JS
@@ -587,9 +656,6 @@ static void start_rsvp_for_title(void) {
   }
 }
 
-// Forward declaration for after article callback
-static void after_article_splash_callback(void *context);
-
 // Show splash and then go to next title after article reading
 static void show_splash_then_next_title(void) {
   // Cancel any existing timers
@@ -607,19 +673,6 @@ static void show_splash_then_next_title(void) {
   news_article[0] = '\0';
   rsvp_word[0] = '\0';
 
-  // Show splash screen
-  s_splash_active = true;
-  layer_mark_dirty(s_canvas_layer);
-
-  // After 500ms, go to next title
-  news_timer = app_timer_register(500, after_article_splash_callback, NULL);
-}
-
-// Callback after splash screen when returning from article
-static void after_article_splash_callback(void *context) {
-  news_timer = NULL;
-  s_splash_active = false;
-
   // Move to next title
   int8_t next_index;
   if (s_article_news_index >= news_titles_count - 1) {
@@ -632,7 +685,7 @@ static void after_article_splash_callback(void *context) {
   current_news_index = next_index;
   snprintf(news_title, sizeof(news_title), "%s", news_titles[next_index]);
 
-  // Start showing the title with delay (like after splash)
+  // Start showing the title
   s_first_news_after_splash = true;
   start_rsvp_for_title();
 }
@@ -705,12 +758,6 @@ static void news_timer_callback(void *context) {
     return;
   }
 
-  // If splash was active, now request first news
-  if (s_splash_active) {
-    s_splash_active = false;
-    layer_mark_dirty(s_canvas_layer);
-  }
-
   // Check if we already have all the news we need
   if (news_titles_count >= news_max_count) {
     return;
@@ -743,6 +790,41 @@ static void news_timer_callback(void *context) {
 static void inbox_received_callback(DictionaryIterator *iterator,
                                     void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Received message from JS");
+
+  // Handle feeds count
+  Tuple *feeds_count_tuple = dict_find(iterator, KEY_FEEDS_COUNT);
+  if (feeds_count_tuple) {
+    feed_count = feeds_count_tuple->value->uint8;
+    APP_LOG(APP_LOG_LEVEL_INFO, "Received feeds count: %d", feed_count);
+    if (feed_count > 20) feed_count = 20;
+    // Reset feed names array
+    for (int i = 0; i < 20; i++) {
+      feed_names[i][0] = '\0';
+    }
+    // Reload menu if visible
+    if (s_showing_menu && s_menu_layer) {
+      menu_layer_reload_data(s_menu_layer);
+    }
+    return;
+  }
+
+  // Handle feed name
+  Tuple *feed_name_tuple = dict_find(iterator, KEY_FEED_NAME);
+  if (feed_name_tuple) {
+    // Find first empty slot
+    for (int i = 0; i < feed_count && i < 20; i++) {
+      if (feed_names[i][0] == '\0') {
+        snprintf(feed_names[i], sizeof(feed_names[0]), "%s", feed_name_tuple->value->cstring);
+        APP_LOG(APP_LOG_LEVEL_INFO, "Received feed name %d: %s", i, feed_names[i]);
+        break;
+      }
+    }
+    // Reload menu if visible
+    if (s_showing_menu && s_menu_layer) {
+      menu_layer_reload_data(s_menu_layer);
+    }
+    return;
+  }
 
   // Handle article content
   Tuple *article_tuple = dict_find(iterator, KEY_NEWS_ARTICLE);
@@ -1018,14 +1100,64 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
-  // If reading article, stop and go to splash then next title
+  // If reading article, stop and go back to title list
   if (s_reading_article) {
-    show_splash_then_next_title();
+    // Cancel timers
+    if (rsvp_timer) {
+      app_timer_cancel(rsvp_timer);
+      rsvp_timer = NULL;
+    }
+    if (rsvp_start_timer) {
+      app_timer_cancel(rsvp_start_timer);
+      rsvp_start_timer = NULL;
+    }
+    
+    s_reading_article = false;
+    news_article[0] = '\0';
+    s_article_news_index = -1;
+    
+    // Go back to showing the title
+    start_rsvp_for_title();
     return;
   }
 
-  // Otherwise, exit the app
-  window_stack_pop(true);
+  // If showing menu, exit the app
+  if (s_showing_menu) {
+    window_stack_pop(true);
+    return;
+  }
+
+  // Otherwise, go back to journal menu
+  // Cancel all timers
+  if (rsvp_timer) {
+    app_timer_cancel(rsvp_timer);
+    rsvp_timer = NULL;
+  }
+  if (rsvp_start_timer) {
+    app_timer_cancel(rsvp_start_timer);
+    rsvp_start_timer = NULL;
+  }
+  if (news_timer) {
+    app_timer_cancel(news_timer);
+    news_timer = NULL;
+  }
+  if (end_timer) {
+    app_timer_cancel(end_timer);
+    end_timer = NULL;
+  }
+  
+  // Reset news state
+  news_titles_count = 0;
+  current_news_index = -1;
+  news_title[0] = '\0';
+  rsvp_word[0] = '\0';
+  s_end_screen = false;
+  s_paused = false;
+  s_show_focal_lines_only = false;
+  s_first_news_after_splash = true;
+  
+  // Show the journal menu
+  show_journal_menu();
 }
 
 static void click_config_provider(void *context) {
@@ -1040,15 +1172,29 @@ static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
+  // Create canvas layer for RSVP display
   s_canvas_layer = layer_create(bounds);
   layer_set_update_proc(s_canvas_layer, update_proc);
   layer_add_child(window_layer, s_canvas_layer);
+  layer_set_hidden(s_canvas_layer, true); // Start hidden
 
-  window_set_click_config_provider(window, click_config_provider);
+  // Create menu layer for journal selection
+  s_menu_layer = menu_layer_create(bounds);
+  menu_layer_set_callbacks(s_menu_layer, NULL, (MenuLayerCallbacks){
+    .get_num_rows = menu_get_num_rows_callback,
+    .draw_row = menu_draw_row_callback,
+    .select_click = menu_select_callback,
+  });
+  menu_layer_set_click_config_onto_window(s_menu_layer, window);
+  layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
+  
+  // Start with menu visible
+  s_showing_menu = true;
 }
 
 static void main_window_unload(Window *window) {
   layer_destroy(s_canvas_layer);
+  menu_layer_destroy(s_menu_layer);
 }
 
 // Init
@@ -1092,8 +1238,7 @@ static void init(void) {
   APP_LOG(APP_LOG_LEVEL_INFO, "AppMessage opened with inbox=%lu, outbox=%lu",
           inbox_size, outbox_size);
 
-  // Show splash for 1 second then request first news
-  news_timer = app_timer_register(1000, news_timer_callback, NULL);
+  // App starts with journal menu - feed names will be sent by JS on ready
 }
 
 // Deinit

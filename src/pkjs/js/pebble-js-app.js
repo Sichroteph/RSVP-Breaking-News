@@ -2,10 +2,14 @@
 var CONFIG_URL = 'https://sichroteph.github.io/RSVP-Breaking-News/';
 
 // Default RSS feeds
-var RSS_DEFAULT = 'https://feeds.bbci.co.uk/news/world/rss.xml';
-var RSS_BREAKING = 'https://feeds.bbci.co.uk/news/world/rss.xml';
-var RSS_GAMING = 'http://feeds.ign.com/ign/games-all';
-var RSS_FINANCE = 'https://feeds.bbci.co.uk/news/business/rss.xml';
+var DEFAULT_FEEDS = [
+  { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+  { name: 'NY Times', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+  { name: 'NPR News', url: 'https://feeds.npr.org/1001/rss.xml' },
+  { name: 'Guardian', url: 'https://www.theguardian.com/world/rss' },
+  { name: 'Le Monde', url: 'https://www.lemonde.fr/rss/une.xml' },
+  { name: 'Reuters', url: 'https://feeds.reuters.com/reuters/topNews' }
+];
 
 // Message keys
 var KEY_NEWS_TITLE = 172;
@@ -18,21 +22,48 @@ var KEY_CONFIG_RECEIVED = 179;
 var KEY_REQUEST_ARTICLE = 180;
 var KEY_NEWS_ARTICLE = 181;
 var KEY_BACKLIGHT_ENABLED = 182;
+var KEY_FEED_NAME = 183;
+var KEY_REQUEST_FEEDS = 184;
+var KEY_SELECT_FEED = 185;
+var KEY_FEEDS_COUNT = 186;
 
 // State
 var g_items = [];        // Array of {title: string, description: string}
 var g_current_index = 0;
 var g_channel_title = '';
+var g_feeds = [];        // Array of {name: string, url: string}
+var g_selected_feed_index = 0;
+var g_feeds_sent_index = 0;
 
-// Get RSS URL from localStorage or use default
-function getRssUrl() {
-  var customUrl = localStorage.getItem('news_feed_url');
-  if (customUrl && customUrl.trim() !== '') {
-    console.log('Using custom RSS URL: ' + customUrl);
-    return customUrl.trim();
+// Load feeds from localStorage or use defaults
+function loadFeeds() {
+  var stored = localStorage.getItem('rss_feeds');
+  if (stored) {
+    try {
+      g_feeds = JSON.parse(stored);
+      if (!Array.isArray(g_feeds) || g_feeds.length === 0) {
+        g_feeds = DEFAULT_FEEDS.slice();
+      }
+    } catch (e) {
+      g_feeds = DEFAULT_FEEDS.slice();
+    }
+  } else {
+    g_feeds = DEFAULT_FEEDS.slice();
   }
-  console.log('Using default RSS URL: ' + RSS_DEFAULT);
-  return RSS_DEFAULT;
+  console.log('Loaded ' + g_feeds.length + ' feeds');
+}
+
+// Get RSS URL for selected feed
+function getRssUrl() {
+  if (g_feeds.length === 0) {
+    loadFeeds();
+  }
+  if (g_selected_feed_index >= 0 && g_selected_feed_index < g_feeds.length) {
+    console.log('Using feed: ' + g_feeds[g_selected_feed_index].name + ' - ' + g_feeds[g_selected_feed_index].url);
+    return g_feeds[g_selected_feed_index].url;
+  }
+  console.log('Using default feed');
+  return DEFAULT_FEEDS[0].url;
 }
 
 // Decode HTML entities
@@ -190,6 +221,44 @@ function sendNextNewsItem() {
   });
 }
 
+// Send feed names to Pebble (one at a time)
+function sendFeedNames() {
+  loadFeeds();
+  g_feeds_sent_index = 0;
+  
+  // First send the count
+  var dict = {};
+  dict[KEY_FEEDS_COUNT] = g_feeds.length;
+  Pebble.sendAppMessage(dict, function() {
+    console.log('Feeds count sent: ' + g_feeds.length);
+    // Then send each feed name
+    sendNextFeedName();
+  }, function(e) {
+    console.log('Failed to send feeds count: ' + JSON.stringify(e));
+  });
+}
+
+function sendNextFeedName() {
+  if (g_feeds_sent_index >= g_feeds.length) {
+    console.log('All feed names sent');
+    return;
+  }
+
+  var feed = g_feeds[g_feeds_sent_index];
+  console.log('Sending feed name ' + g_feeds_sent_index + ': ' + feed.name);
+
+  var dict = {};
+  dict[KEY_FEED_NAME] = feed.name;
+  Pebble.sendAppMessage(dict, function() {
+    console.log('Feed name sent successfully');
+    g_feeds_sent_index++;
+    // Send next feed name after a short delay
+    setTimeout(sendNextFeedName, 50);
+  }, function(e) {
+    console.log('Failed to send feed name: ' + JSON.stringify(e));
+  });
+}
+
 // Send article for a specific index to Pebble
 function sendArticle(index) {
   if (index < 0 || index >= g_items.length) {
@@ -213,11 +282,32 @@ function sendArticle(index) {
 // Pebble event handlers
 Pebble.addEventListener('ready', function (e) {
   console.log('PebbleKit JS ready');
-  fetchRssFeed();
+  loadFeeds();
+  // Send feed names to the watch for the selection menu
+  sendFeedNames();
 });
 
 Pebble.addEventListener('appmessage', function (e) {
   console.log('Received message from Pebble: ' + JSON.stringify(e.payload));
+
+  // Handle feed selection
+  var feedIndex = e.payload[KEY_SELECT_FEED] || e.payload['KEY_SELECT_FEED'] || e.payload['185'];
+  if (feedIndex !== undefined) {
+    console.log('Feed selection received: ' + feedIndex);
+    g_selected_feed_index = parseInt(feedIndex);
+    g_items = [];
+    g_current_index = 0;
+    fetchRssFeed();
+    return;
+  }
+
+  // Handle request for feed list
+  var requestFeeds = e.payload[KEY_REQUEST_FEEDS] || e.payload['KEY_REQUEST_FEEDS'] || e.payload['184'];
+  if (requestFeeds !== undefined) {
+    console.log('Feed list request received');
+    sendFeedNames();
+    return;
+  }
 
   // Handle article request
   var articleIndex = e.payload[KEY_REQUEST_ARTICLE] || e.payload['KEY_REQUEST_ARTICLE'] || e.payload['180'];
@@ -272,35 +362,16 @@ Pebble.addEventListener('webviewclosed', function (e) {
     var configData = JSON.parse(decodeURIComponent(e.response));
     console.log('Configuration data: ' + JSON.stringify(configData));
 
-    // La page de config envoie input_news_feed_url
-    var feedUrl = configData.input_news_feed_url || configData.news_feed_url;
-    if (feedUrl !== undefined) {
-      var customUrl = feedUrl.trim();
-      if (customUrl !== '') {
-        console.log('Saving custom feed URL: ' + customUrl);
-        localStorage.setItem('news_feed_url', customUrl);
+    // Handle RSS feeds array
+    var rssFeeds = configData.rss_feeds;
+    if (rssFeeds !== undefined && Array.isArray(rssFeeds)) {
+      console.log('Saving ' + rssFeeds.length + ' RSS feeds');
+      localStorage.setItem('rss_feeds', JSON.stringify(rssFeeds));
+      g_feeds = rssFeeds;
 
-        // Reset items pour forcer le rechargement
-        g_items = [];
-        g_current_index = 0;
-
-        // Vibration de confirmation
-        var dict = {};
-        dict[KEY_NEWS_FEED_URL] = 1; // Signal de confirmation
-        Pebble.sendAppMessage(dict, function () {
-          console.log('Confirmation vibration sent');
-        }, function (err) {
-          console.log('Failed to send confirmation: ' + JSON.stringify(err));
-        });
-
-        fetchRssFeed();
-      } else {
-        console.log('Clearing custom feed URL');
-        localStorage.removeItem('news_feed_url');
-        g_items = [];
-        g_current_index = 0;
-        fetchRssFeed();
-      }
+      // Reset items pour forcer le rechargement
+      g_items = [];
+      g_current_index = 0;
     }
 
     // Gestion de la vitesse de lecture
@@ -329,8 +400,8 @@ Pebble.addEventListener('webviewclosed', function (e) {
 
     Pebble.sendAppMessage(configDict, function () {
       console.log('Config received signal and speed sent');
-      // Recharger le flux RSS après envoi des paramètres
-      fetchRssFeed();
+      // Send updated feed names to watch
+      sendFeedNames();
     }, function (err) {
       console.log('Failed to send config: ' + JSON.stringify(err));
     });
