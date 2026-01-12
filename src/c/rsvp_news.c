@@ -19,6 +19,7 @@
 #define KEY_CONFIG_RECEIVED 179
 #define KEY_REQUEST_ARTICLE 180
 #define KEY_NEWS_ARTICLE 181
+#define KEY_BACKLIGHT_ENABLED 182
 
 // Main window and layer
 static Window *s_main_window;
@@ -42,6 +43,7 @@ static uint8_t rsvp_word_index = 0;
 static uint16_t rsvp_wpm_ms = 150; // 150ms per word (400 WPM)
 static AppTimer *rsvp_timer = NULL;
 static AppTimer *rsvp_start_timer = NULL;
+static bool s_backlight_enabled = true; // Keep backlight on during reading
 
 // Display states
 static bool s_splash_active = true;
@@ -560,8 +562,10 @@ static void start_rsvp_for_title(void) {
       rsvp_start_timer = NULL;
     }
 
-    // Enable backlight for reading
-    light_enable_interaction();
+    // Enable backlight for reading if option is enabled
+    if (s_backlight_enabled) {
+      light_enable_interaction();
+    }
 
     // On first news after splash, start immediately without help screen
     // On subsequent news (after navigation), also start immediately
@@ -644,8 +648,10 @@ static void start_article_reading(void) {
   s_reading_article = true;
   rsvp_word_index = 0;
 
-  // Enable backlight for reading
-  light_enable_interaction();
+  // Enable backlight for reading if option is enabled
+  if (s_backlight_enabled) {
+    light_enable_interaction();
+  }
 
   if (extract_next_word()) {
     s_show_focal_lines_only = false;
@@ -665,8 +671,10 @@ static void rsvp_timer_callback(void *context) {
     return;
   }
 
-  // Keep backlight on during reading
-  light_enable_interaction();
+  // Keep backlight on during reading if option is enabled
+  if (s_backlight_enabled) {
+    light_enable_interaction();
+  }
 
   rsvp_word_index++;
   if (extract_next_word()) {
@@ -835,6 +843,14 @@ static void inbox_received_callback(DictionaryIterator *iterator,
       persist_write_int(KEY_READING_SPEED_WPM, wpm);
     }
 
+    // Gérer l'option de rétroéclairage si présente
+    Tuple *backlight_tuple = dict_find(iterator, KEY_BACKLIGHT_ENABLED);
+    if (backlight_tuple) {
+      s_backlight_enabled = backlight_tuple->value->uint8 != 0;
+      APP_LOG(APP_LOG_LEVEL_INFO, "Backlight enabled: %d", s_backlight_enabled);
+      persist_write_bool(KEY_BACKLIGHT_ENABLED, s_backlight_enabled);
+    }
+
     // Réinitialiser l'état de l'application
     reset_app_state();
     return;
@@ -851,6 +867,14 @@ static void inbox_received_callback(DictionaryIterator *iterator,
 
     // Sauvegarder dans persist storage
     persist_write_int(KEY_READING_SPEED_WPM, wpm);
+  }
+
+  // Gérer l'option de rétroéclairage (si envoyée seule)
+  Tuple *backlight_tuple = dict_find(iterator, KEY_BACKLIGHT_ENABLED);
+  if (backlight_tuple && !config_received_tuple) {
+    s_backlight_enabled = backlight_tuple->value->uint8 != 0;
+    APP_LOG(APP_LOG_LEVEL_INFO, "Backlight enabled: %d", s_backlight_enabled);
+    persist_write_bool(KEY_BACKLIGHT_ENABLED, s_backlight_enabled);
   }
 }
 
@@ -1045,6 +1069,14 @@ static void init(void) {
             rsvp_wpm_ms);
   } else {
     APP_LOG(APP_LOG_LEVEL_INFO, "Using default reading speed: 400 WPM");
+  }
+
+  // Charger l'option de rétroéclairage sauvegardée
+  if (persist_exists(KEY_BACKLIGHT_ENABLED)) {
+    s_backlight_enabled = persist_read_bool(KEY_BACKLIGHT_ENABLED);
+    APP_LOG(APP_LOG_LEVEL_INFO, "Loaded backlight enabled: %d", s_backlight_enabled);
+  } else {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Using default backlight enabled: true");
   }
 
   // Register AppMessage handlers

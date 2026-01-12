@@ -17,6 +17,7 @@ var KEY_CONFIG_OPENED = 178;
 var KEY_CONFIG_RECEIVED = 179;
 var KEY_REQUEST_ARTICLE = 180;
 var KEY_NEWS_ARTICLE = 181;
+var KEY_BACKLIGHT_ENABLED = 182;
 
 // State
 var g_items = [];        // Array of {title: string, description: string}
@@ -309,11 +310,21 @@ Pebble.addEventListener('webviewclosed', function (e) {
       localStorage.setItem('reading_speed_wpm', readingSpeed);
     }
 
+    // Gestion de l'option de rétroéclairage
+    var backlightEnabled = configData.backlight_enabled;
+    if (backlightEnabled !== undefined) {
+      console.log('Saving backlight enabled: ' + backlightEnabled);
+      localStorage.setItem('backlight_enabled', backlightEnabled);
+    }
+
     // Envoyer toutes les données de config en une seule fois avec signal de réception
     var configDict = {};
     configDict[KEY_CONFIG_RECEIVED] = 1; // Signal de réception des paramètres (déclenche vibration + reset)
     if (readingSpeed !== undefined) {
       configDict[KEY_READING_SPEED_WPM] = parseInt(readingSpeed);
+    }
+    if (backlightEnabled !== undefined) {
+      configDict[KEY_BACKLIGHT_ENABLED] = backlightEnabled ? 1 : 0;
     }
 
     Pebble.sendAppMessage(configDict, function () {
