@@ -252,6 +252,16 @@
           <input type='checkbox' id='input_backlight_enabled' checked style='width: 24px; height: 24px;'>
         </div>
       </label>
+      <hr style='margin: 15px 0; border: none; border-top: 1px solid #e0e0e0;'>
+      <label class='item' style='display: flex; align-items: center; justify-content: space-between;'>
+        <div style='flex: 1;'>
+          <div style='font-weight: bold; margin-bottom: 5px;'>Light Mode</div>
+          <div style='font-size: 0.85em; color: #666;'>Use light background with dark text instead of dark mode</div>
+        </div>
+        <div style='margin-left: 15px;'>
+          <input type='checkbox' id='input_light_mode' style='width: 24px; height: 24px;'>
+        </div>
+      </label>
     </div>
   </div>
 
@@ -522,17 +532,20 @@
   function getConfigData() {
     var input_reading_speed = document.getElementById('input_reading_speed');
     var input_backlight_enabled = document.getElementById('input_backlight_enabled');
+    var input_light_mode = document.getElementById('input_light_mode');
 
     var options = {
       'rss_feeds': feeds,
       'reading_speed_wpm': parseInt(input_reading_speed.value),
-      'backlight_enabled': input_backlight_enabled.checked
+      'backlight_enabled': input_backlight_enabled.checked,
+      'light_mode': input_light_mode.checked
     };
 
     // Save for next launch
     localStorage.setItem('rss_feeds', JSON.stringify(feeds));
     localStorage.setItem('reading_speed_wpm', options['reading_speed_wpm']);
     localStorage.setItem('backlight_enabled', options['backlight_enabled']);
+    localStorage.setItem('light_mode', options['light_mode']);
 
     console.log('Got options: ' + JSON.stringify(options));
     return options;
@@ -562,9 +575,11 @@
   (function () {
     var input_reading_speed = document.getElementById('input_reading_speed');
     var input_backlight_enabled = document.getElementById('input_backlight_enabled');
+    var input_light_mode = document.getElementById('input_light_mode');
 
     input_reading_speed.value = localStorage['reading_speed_wpm'] || '270';
     input_backlight_enabled.checked = localStorage['backlight_enabled'] !== 'false'; // Default true
+    input_light_mode.checked = localStorage['light_mode'] === 'true'; // Default false (dark mode)
     updateSpeedDisplay();
 
     // Load feeds
