@@ -73,7 +73,7 @@ static bool s_first_news_after_splash =
 
 // News rotation
 static uint8_t news_display_count = 0;
-static uint8_t news_max_count = 5;
+static uint8_t news_max_count = 50;
 static AppTimer *news_timer = NULL;
 static AppTimer *end_timer = NULL;
 
@@ -196,12 +196,11 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer,
   } else {
     menu_cell_basic_draw(ctx, cell_layer, feed_names[cell_index->row], NULL,
                          NULL);
-    
+
     // Draw a separator line at the bottom of each cell
     GRect bounds = layer_get_bounds(cell_layer);
     graphics_context_set_stroke_color(ctx, GColorBlack);
-    graphics_draw_line(ctx, 
-                       GPoint(0, bounds.size.h - 1),
+    graphics_draw_line(ctx, GPoint(0, bounds.size.h - 1),
                        GPoint(bounds.size.w, bounds.size.h - 1));
   }
 }
@@ -348,7 +347,8 @@ static void draw_rsvp_word(GContext *ctx) {
   // Calculate X position so pivot letter is centered at SPRITZ_PIVOT_X
   // The pivot letter's center should be at SPRITZ_PIVOT_X
   // Shift 3 pixels to the left
-  int word_x = SPRITZ_PIVOT_X - pre_pivot_width - (pivot_char_width / 2) + 2 - 3;
+  int word_x =
+      SPRITZ_PIVOT_X - pre_pivot_width - (pivot_char_width / 2) + 2 - 3;
 
   // Y position for text
   int text_y = SPRITZ_WORD_Y - 16; // Adjust for font baseline
@@ -759,7 +759,7 @@ static void show_splash_then_next_title(void) {
   // Don't start reading - just show the page number after a pause
   rsvp_word[0] = '\0';
   layer_mark_dirty(s_canvas_layer);
-  
+
   // Show page number after 500ms pause
   if (page_number_timer) {
     app_timer_cancel(page_number_timer);
