@@ -66,7 +66,8 @@ static bool s_splash_active = false;
 static bool s_end_screen = false;
 static bool s_paused = false;
 static bool s_waiting_for_config = false;
-static bool s_showing_page_number = false; // True when showing page number as word
+static bool s_showing_page_number =
+    false; // True when showing page number as word
 static bool s_first_news_after_splash =
     true; // True for first news, requires delay
 
@@ -195,6 +196,13 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer,
   } else {
     menu_cell_basic_draw(ctx, cell_layer, feed_names[cell_index->row], NULL,
                          NULL);
+    
+    // Draw a separator line at the bottom of each cell
+    GRect bounds = layer_get_bounds(cell_layer);
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+    graphics_draw_line(ctx, 
+                       GPoint(0, bounds.size.h - 1),
+                       GPoint(bounds.size.w, bounds.size.h - 1));
   }
 }
 
@@ -339,7 +347,8 @@ static void draw_rsvp_word(GContext *ctx) {
 
   // Calculate X position so pivot letter is centered at SPRITZ_PIVOT_X
   // The pivot letter's center should be at SPRITZ_PIVOT_X
-  int word_x = SPRITZ_PIVOT_X - pre_pivot_width - (pivot_char_width / 2) + 2;
+  // Shift 3 pixels to the left
+  int word_x = SPRITZ_PIVOT_X - pre_pivot_width - (pivot_char_width / 2) + 2 - 3;
 
   // Y position for text
   int text_y = SPRITZ_WORD_Y - 16; // Adjust for font baseline
@@ -640,7 +649,7 @@ static void page_number_timer_callback(void *context);
 // Page number timer callback - shows page number as word after 500ms pause
 static void page_number_timer_callback(void *context) {
   page_number_timer = NULL;
-  
+
   // Display page number as a word (only for titles, not articles)
   if (!s_reading_article && news_titles_count > 0 && current_news_index >= 0) {
     snprintf(rsvp_word, sizeof(rsvp_word), "%d/%d", current_news_index + 1,
@@ -747,9 +756,15 @@ static void show_splash_then_next_title(void) {
   current_news_index = next_index;
   snprintf(news_title, sizeof(news_title), "%s", news_titles[next_index]);
 
-  // Start showing the title
-  s_first_news_after_splash = true;
-  start_rsvp_for_title();
+  // Don't start reading - just show the page number after a pause
+  rsvp_word[0] = '\0';
+  layer_mark_dirty(s_canvas_layer);
+  
+  // Show page number after 500ms pause
+  if (page_number_timer) {
+    app_timer_cancel(page_number_timer);
+  }
+  page_number_timer = app_timer_register(500, page_number_timer_callback, NULL);
 }
 
 // Start reading the article content
@@ -809,7 +824,8 @@ static void rsvp_timer_callback(void *context) {
       if (page_number_timer) {
         app_timer_cancel(page_number_timer);
       }
-      page_number_timer = app_timer_register(500, page_number_timer_callback, NULL);
+      page_number_timer =
+          app_timer_register(500, page_number_timer_callback, NULL);
     }
   }
 }
