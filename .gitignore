@@ -1,14 +1,22 @@
 # Pebble build artifacts
 build/
+*.pbw
 
 # Lock files
 .lock-waf*
+.waf*
 
 # Python cache
 *.pyc
 __pycache__/
 
-# Node modules (si vous utilisez npm)
+# Compiled objects
+*.o
+*.elf
+*.bin
+*.map
+
+# Node modules
 node_modules/
 
 # OS files
@@ -27,3 +35,9 @@ Thumbs.db
 
 # Marketing assets
 marketing/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
