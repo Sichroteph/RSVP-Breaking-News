@@ -1,4 +1,4 @@
-// RSVP Breaking News - JavaScript component
+// FlashRead News - JavaScript component
 // Fetches news from RSS feed and sends titles to Pebble
 
 console.log("===== RSVP Breaking News JS Loading =====");
@@ -130,7 +130,7 @@ function fetchAndSendNews() {
 
 // Listen for when the app is opened
 Pebble.addEventListener('ready', function () {
-  console.log("===== RSVP Breaking News JS ready event =====");
+  console.log("===== FlashRead News JS ready event =====");
 
   // Send ready signal and pre-fetch news on startup
   var xhr = new XMLHttpRequest();

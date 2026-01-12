@@ -1,14 +1,14 @@
 {
-  "name": "rsvp-breaking-news",
+  "name": "flashread-news",
   "author": "CJ",
-  "version": "1.1.0",
+  "version": "1.6.0",
   "keywords": [
     "pebble-app"
   ],
   "private": true,
   "dependencies": {},
   "pebble": {
-    "displayName": "RSVP News Reader",
+    "displayName": "FlashRead News",
     "uuid": "a1b2c3d4-5e6f-7190-ab12-cd34ef567890",
     "sdkVersion": "3",
     "enableMultiJS": false,

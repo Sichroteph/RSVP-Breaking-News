@@ -190,7 +190,7 @@ function fetchRssFeed() {
 // Parse RSS XML
 function parseRssFeed(xmlText) {
   console.log('Starting RSS parsing, text length: ' + xmlText.length);
-  
+
   try {
     // Try DOMParser first
     if (typeof DOMParser !== 'undefined') {
@@ -244,7 +244,7 @@ function parseRssFeed(xmlText) {
           }
         }
       }
-      
+
       if (g_items.length > 0) {
         console.log('Parsed ' + g_items.length + ' news items with DOMParser');
         g_current_index = 0;
@@ -255,7 +255,7 @@ function parseRssFeed(xmlText) {
   } catch (e) {
     console.log('DOMParser failed: ' + e.message);
   }
-  
+
   // Fallback: use regex parsing
   console.log('Using regex fallback parsing');
   parseRssFeedWithRegex(xmlText);
@@ -264,7 +264,7 @@ function parseRssFeed(xmlText) {
 // Fallback regex parser for RSS
 function parseRssFeedWithRegex(xmlText) {
   g_items = [];
-  
+
   // Extract channel title
   var channelTitleMatch = xmlText.match(/<channel[^>]*>[\s\S]*?<title[^>]*>([^<]+)<\/title>/i);
   if (channelTitleMatch) {
@@ -272,24 +272,24 @@ function parseRssFeedWithRegex(xmlText) {
     console.log('Channel title (regex): ' + g_channel_title);
     sendNewsChannelTitle();
   }
-  
+
   // Extract items using regex
   var itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi;
   var titleRegex = /<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i;
   var descRegex = /<description[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i;
-  
+
   var match;
   var count = 0;
   while ((match = itemRegex.exec(xmlText)) !== null && count < 50) {
     var itemContent = match[1];
-    
+
     var titleMatch = itemContent.match(titleRegex);
     if (titleMatch) {
       var title = titleMatch[1];
       title = decodeHtmlEntities(title);
       title = title.replace(/<[^>]*>/g, '');
       title = title.trim();
-      
+
       var description = '';
       var descMatch = itemContent.match(descRegex);
       if (descMatch) {
@@ -301,7 +301,7 @@ function parseRssFeedWithRegex(xmlText) {
           description = description.substring(0, 497) + '...';
         }
       }
-      
+
       if (title.length > 0) {
         g_items.push({
           title: title,

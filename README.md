@@ -1,4 +1,4 @@
-# RSVP Breaking News
+# FlashRead News
 
 A Pebble application that displays Reuters breaking news headlines using RSVP (Rapid Serial Visual Presentation) technique.
 
@@ -21,7 +21,7 @@ A Pebble application that displays Reuters breaking news headlines using RSVP (R
 ## Building
 
 ```bash
-cd /path/to/RSVP-Breaking-News
+cd /path/to/FlashRead-News
 pebble build
 ```
 

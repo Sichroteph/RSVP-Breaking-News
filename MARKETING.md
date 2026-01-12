@@ -39,12 +39,12 @@ Here are several name options, ranked by relevance to the RSVP speed-reading con
 > **FlashRead News** brings RSS feeds to your Pebble using RSVP (Rapid Serial Visual Presentation) - a proven speed-reading technique that displays words one at a time, centered on the optimal recognition point.
 >
 > **Features:**
-> - 6 pre-configured news sources (BBC, NY Times, NPR, Guardian, Le Monde, Reuters)
-> - Add unlimited custom RSS feeds via phone configuration
-> - Adjustable reading speed from 100 to 600 WPM
-> - Read headlines, then dive into full article descriptions
-> - Optional backlight during reading
-> - Navigate between articles with physical buttons
+        > - 6 pre-configured news sources (BBC, NY Times, NPR, Guardian, Le Monde, Reuters)
+        > - Add unlimited custom RSS feeds via phone configuration
+        > - Adjustable reading speed from 100 to 600 WPM
+        > - Read headlines, then dive into full article descriptions
+        > - Optional backlight during reading
+        > - Navigate between articles with physical buttons
 >
 > Perfect for the small Pebble screen. Free and open source.
 
