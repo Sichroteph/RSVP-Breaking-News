@@ -1,5 +1,22 @@
 #include <pebble.h>
 
+// ============== DEMO MODE ==============
+// Set to 1 to enable demo mode (fixed phrase, manual word advance)
+// Set to 0 for normal operation
+#define DEMO_MODE 0
+
+// Demo phrase for marketing screenshots
+static const char *DEMO_PHRASE =
+    "FlashRead News delivers your favorite RSS feeds straight to your Pebble "
+    "with Spritz, a smart speed-reading technique that flashes words one by "
+    "one "
+    "right where your eyes read best.";
+
+// Demo mode state
+static bool s_demo_mode_active = false;
+static uint16_t s_demo_word_index = 0;
+// ========================================
+
 // Spritz constants for optimal word display (relative to screen dimensions)
 #define SPRITZ_HEADER_Y 5 // Y position for HEADLINE/ARTICLE header
 #define SPRITZ_WORD_Y 55  // Y position of word center (moved up for header)
@@ -84,6 +101,90 @@ static void hide_journal_menu(void);
 static void click_config_provider(void *context);
 static void menu_click_config_provider(void *context);
 static void back_click_handler(ClickRecognizerRef recognizer, void *context);
+
+#if DEMO_MODE
+// Extract word at index from demo phrase
+static bool extract_demo_word(uint16_t word_idx) {
+  const char *p = DEMO_PHRASE;
+  uint16_t word_count = 0;
+  uint16_t word_start = 0;
+  uint16_t word_len = 0;
+  uint16_t i = 0;
+  bool in_word = false;
+
+  while (p[i] != '\0') {
+    if (p[i] == ' ' || p[i] == '\t' || p[i] == '\n') {
+      if (in_word) {
+        if (word_count == word_idx) {
+          if (word_len > sizeof(rsvp_word) - 1) {
+            word_len = sizeof(rsvp_word) - 1;
+          }
+          memcpy(rsvp_word, &p[word_start], word_len);
+          rsvp_word[word_len] = '\0';
+          return true;
+        }
+        word_count++;
+        in_word = false;
+      }
+    } else {
+      if (!in_word) {
+        word_start = i;
+        word_len = 0;
+        in_word = true;
+      }
+      word_len++;
+    }
+    i++;
+  }
+
+  // Handle last word
+  if (in_word && word_count == word_idx) {
+    if (word_len > sizeof(rsvp_word) - 1) {
+      word_len = sizeof(rsvp_word) - 1;
+    }
+    memcpy(rsvp_word, &p[word_start], word_len);
+    rsvp_word[word_len] = '\0';
+    return true;
+  }
+
+  return false;
+}
+
+// Advance to next word in demo mode
+static void demo_advance_word(void) {
+  s_demo_word_index++;
+  if (extract_demo_word(s_demo_word_index)) {
+    layer_mark_dirty(s_canvas_layer);
+  } else {
+    // End of demo phrase - wrap to beginning
+    s_demo_word_index = 0;
+    extract_demo_word(0);
+    layer_mark_dirty(s_canvas_layer);
+  }
+}
+
+// Start demo mode
+static void start_demo_mode(void) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Starting DEMO MODE");
+  s_demo_mode_active = true;
+  s_demo_word_index = 0;
+  s_reading_article = false; // Show "HEADLINE" header
+
+  // Cancel any existing timers
+  if (rsvp_timer) {
+    app_timer_cancel(rsvp_timer);
+    rsvp_timer = NULL;
+  }
+  if (rsvp_start_timer) {
+    app_timer_cancel(rsvp_start_timer);
+    rsvp_start_timer = NULL;
+  }
+
+  // Display first word
+  extract_demo_word(0);
+  layer_mark_dirty(s_canvas_layer);
+}
+#endif
 
 // Calculate the optimal recognition point (ORP) / pivot letter index
 // Based on Spritz algorithm from OpenSpritz
@@ -850,6 +951,13 @@ static void rsvp_timer_callback(void *context) {
     return;
   }
 
+#if DEMO_MODE
+  // In demo mode, don't auto-advance - wait for button press
+  if (s_demo_mode_active) {
+    return;
+  }
+#endif
+
   // Keep backlight on during reading if option is enabled
   if (s_backlight_enabled) {
     light_enable_interaction();
@@ -1169,6 +1277,14 @@ static void display_news_at_index(int8_t index) {
 
 // Button handlers
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+#if DEMO_MODE
+  // In demo mode, any button advances to next word
+  if (s_demo_mode_active) {
+    demo_advance_word();
+    return;
+  }
+#endif
+
   // If reading article, stop and go to splash then next title
   if (s_reading_article) {
     show_splash_then_next_title();
@@ -1213,6 +1329,14 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
+#if DEMO_MODE
+  // In demo mode, any button advances to next word
+  if (s_demo_mode_active) {
+    demo_advance_word();
+    return;
+  }
+#endif
+
   // If reading article, stop and go to splash then next title
   if (s_reading_article) {
     show_splash_then_next_title();
@@ -1243,6 +1367,14 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
+#if DEMO_MODE
+  // In demo mode, any button advances to next word
+  if (s_demo_mode_active) {
+    demo_advance_word();
+    return;
+  }
+#endif
+
   // If reading article, stop and go to splash then next title
   if (s_reading_article) {
     show_splash_then_next_title();
@@ -1419,6 +1551,12 @@ static void init(void) {
           inbox_size, outbox_size);
 
   // App starts with journal menu - feed names will be sent by JS on ready
+
+#if DEMO_MODE
+  // In demo mode, skip the menu and start demo directly
+  hide_journal_menu();
+  start_demo_mode();
+#endif
 }
 
 // Deinit
