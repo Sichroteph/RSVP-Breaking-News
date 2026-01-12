@@ -1556,11 +1556,11 @@ OUTPUT(/home/christophe/pebble-projects/RSVP-Breaking-News/build/aplite/pebble-a
 .debug_ranges   0x0000000000000000      0x430
  .debug_ranges  0x0000000000000000      0x430 src/c/rsvp_news.c.25.o
 
-.debug_line     0x0000000000000000      0xa06
- .debug_line    0x0000000000000000      0x7fd src/c/rsvp_news.c.25.o
- .debug_line    0x00000000000007fd      0x122 aplite/appinfo.auto.c.25.o
- .debug_line    0x000000000000091f       0x1d aplite/src/resource_ids.auto.c.25.o
- .debug_line    0x000000000000093c       0xca src/message_keys.auto.c.25.o
+.debug_line     0x0000000000000000      0xa08
+ .debug_line    0x0000000000000000      0x7ff src/c/rsvp_news.c.25.o
+ .debug_line    0x00000000000007ff      0x122 aplite/appinfo.auto.c.25.o
+ .debug_line    0x0000000000000921       0x1d aplite/src/resource_ids.auto.c.25.o
+ .debug_line    0x000000000000093e       0xca src/message_keys.auto.c.25.o
 
 .debug_str      0x0000000000000000     0x1816
  .debug_str     0x0000000000000000     0x14d7 src/c/rsvp_news.c.25.o
